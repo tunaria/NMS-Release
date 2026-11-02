@@ -14529,7 +14529,8 @@ bool Client::AddExtraClass(int class_id) {
 
 		int n_class_bit = GetPlayerClassBit(class_id);
 
-		if (class_count > 2 || (classes_bits & n_class_bit)) {
+		// NMS: limit read from a rule so quests and server share one value
+		if (class_count >= RuleI(Custom, MaxPlayerClasses) || (classes_bits & n_class_bit)) {
 			return false;
 		}
 		else {

@@ -223,6 +223,20 @@ sub IsNMS
     }
 }
 
+# NMS: number of player classes, Warrior (1) to Berserker (16)
+my $PLAYER_CLASS_COUNT = 16;
+
+# NMS: the class limit comes from the server rule so quests and AddExtraClass share one value.
+# Clamped to 1..16: below 1 the random path in Vision_of_Ayonae.pl would leave a character with
+# no class, above 16 its loop that fills the remaining classes would never end.
+sub GetMaxClasses {
+    my $max_classes = int(quest::get_rule("Custom:MaxPlayerClasses") || 0);
+
+    return 1 if $max_classes < 1;
+    return $PLAYER_CLASS_COUNT if $max_classes > $PLAYER_CLASS_COUNT;
+    return $max_classes;
+}
+
 sub GetClassMap {
     return (
         1 => "Warrior",
@@ -310,7 +324,8 @@ sub AddClass {
     my $class_id = shift;
     my $client = shift || plugin::val('$client');
 
-    if ($class_id && $class_id > 0 && $class_id < 17 && GetClassesCount($client) < 3) {
+    # NMS: class limit from rule Custom:MaxPlayerClasses
+    if ($class_id && $class_id > 0 && $class_id < 17 && GetClassesCount($client) < GetMaxClasses()) {
         $client->AddExtraClass($class_id);
         quest::ding();
 
@@ -325,7 +340,8 @@ sub AddClass {
             $client->UpdateTaskActivity(3, 2, 1);
         }
 
-        if (GetClassesCount() > 2 && CheckUniqueClass($client->GetClassesBitmask())) {
+        # NMS: a combination is announced once it is complete, i.e. at the class limit
+        if (GetClassesCount() >= GetMaxClasses() && CheckUniqueClass($client->GetClassesBitmask())) {
             my $class_bits          = $client->GetClassesBitmask();
             quest::set_data("class-$class_bits", $class_bits);
             plugin::WorldAnnounce("$name has become the FIRST $full_class_name.");            
@@ -449,8 +465,8 @@ sub IsValidToAddClass {
     # Check if the client already has this class
     my $has_class_already = ($class_bits & (1 << ($class_id_to_add - 1))) ? 1 : 0;
 
-    # Determine if eligible to add: less than 3 classes and doesn't already have this class
-    return ($classes_count < 3 && !$has_class_already);
+    # NMS: eligible below the class limit (rule Custom:MaxPlayerClasses) and without this class
+    return ($classes_count < GetMaxClasses() && !$has_class_already);
 }
 
 sub HasClass {

@@ -44,11 +44,11 @@ static void MulticlassList(Client *c, Client *t)
 	c->Message(
 		Chat::White,
 		fmt::format(
-			"{} {} {} class{}: {}.",
+			"{} {} {}/{} classes: {}.",
 			c->GetTargetDescription(t, TargetDescriptionType::UCYou),
 			c == t ? "have" : "has",
 			class_names.size(),
-			class_names.size() != 1 ? "es" : "",
+			RuleI(Custom, MaxPlayerClasses),
 			Strings::Join(class_names, ", ")
 		).c_str()
 	);
@@ -74,9 +74,10 @@ static void MulticlassAdd(Client *c, Client *t, uint8 class_id)
 		c->Message(
 			Chat::White,
 			fmt::format(
-				"{} already {} the maximum number of classes. Remove one first.",
+				"{} already {} the maximum of {} classes (rule Custom:MaxPlayerClasses). Remove one first.",
 				c->GetTargetDescription(t, TargetDescriptionType::UCYou),
-				c == t ? "have" : "has"
+				c == t ? "have" : "has",
+				RuleI(Custom, MaxPlayerClasses)
 			).c_str()
 		);
 		return;
