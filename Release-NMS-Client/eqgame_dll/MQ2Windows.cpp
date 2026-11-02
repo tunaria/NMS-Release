@@ -320,6 +320,27 @@ void ShutdownMQ2Windows()
     WindowList.Cleanup();
 }
 
+// NMS: some patchers ship an EQUI.xml that already includes our windows (NMS_WaypointsWnd.xml).
+// Adding the same <Include> again loads the window twice and EQ stops with "Error in GUI XML",
+// so GenerateMQUI remembers the includes EQUI.xml has and only adds the missing ones.
+static string NMS_ToLower(string text)
+{
+    transform(text.begin(), text.end(), text.begin(), [](unsigned char c) { return (char)tolower(c); });
+    return text;
+}
+
+static void NMS_RememberInclude(string& seenIncludes, const char* line)
+{
+    string lower = NMS_ToLower(line);
+    if (lower.find("<include>") != string::npos)
+        seenIncludes += lower;
+}
+
+static bool NMS_IsIncluded(const string& seenIncludes, const char* filename)
+{
+    return seenIncludes.find(NMS_ToLower(string("<include>") + filename + "</include>")) != string::npos;
+}
+
 bool GenerateMQUI()
 {
     // create EverQuest\uifiles\default\MQUI.xml
@@ -353,14 +374,18 @@ bool GenerateMQUI()
         fclose(forg);
         return false;
     }
+    string seenIncludes; // NMS: includes EQUI.xml already has
     while (fgets(Buffer, 2048, forg)) {
+        NMS_RememberInclude(seenIncludes, Buffer);
         if (strstr(Buffer, "</Composite>")) {
             DebugSpew("GenerateMQUI::Inserting our xml files");
             PMQXMLFILE      pFile = pXMLFiles;
             while (pFile) {
-                DebugSpew("GenerateMQUI::Inserting %s",pFile->szFilename);
-                fprintf(fnew, "<Include>%s</Include>\n",
-                    pFile->szFilename);
+                if (!NMS_IsIncluded(seenIncludes, pFile->szFilename)) { // NMS: never include twice
+                    DebugSpew("GenerateMQUI::Inserting %s",pFile->szFilename);
+                    fprintf(fnew, "<Include>%s</Include>\n",
+                        pFile->szFilename);
+                }
                 pFile = pFile->pNext;
             }
         }
@@ -402,14 +427,18 @@ bool GenerateMQUI()
                 fclose(forg);
                 return false;
             }
+            string skinIncludes; // NMS: includes this skin's EQUI.xml already has
             while (fgets(Buffer, 2048, forg)) {
+                NMS_RememberInclude(skinIncludes, Buffer);
                 if (strstr(Buffer, "</Composite>")) {
                     //DebugSpew("GenerateMQUI::Inserting our xml files");
                     PMQXMLFILE      pFile = pXMLFiles;
                     while (pFile) {
                         //DebugSpew("GenerateMQUI::Inserting %s",pFile->szFilename);
-                        fprintf(fnew, "<Include>%s</Include>\n",
-                            pFile->szFilename);
+                        if (!NMS_IsIncluded(skinIncludes, pFile->szFilename)) { // NMS: never include twice
+                            fprintf(fnew, "<Include>%s</Include>\n",
+                                pFile->szFilename);
+                        }
                         pFile = pFile->pNext;
                     }
                 }
