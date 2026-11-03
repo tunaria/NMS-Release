@@ -4,7 +4,8 @@
 # three hashes define them. %popups is friendly name to ID, %popups_text is ID => text, %popups_title is ID=>title
 
 sub GetMaxExpansionName {
-    return "Kunark";
+    # NMS: follows rule Custom:MaxProgressionExpansion instead of a fixed name
+    return plugin::GetMaxProgressionExpansionName();
 }
 
 my $color_end = "</font>";
@@ -50,7 +51,7 @@ my %popups_text = (
                ."* $color_object Alternate Advancement$color_end - All classes start with selected class-defining AAs. Most other abilities, including out of era through TBS, available at level 51.<br>"
                ."* $color_object Tiered Items$color_end - Items can be found in three qualities; $color_normal Normal$color_end, $color_enchanted Enchanted$color_end, and$color_legendary Legendary$color_end with increasing rarity in drops. "
                ."You can also upgrade your items over time by equipping them in your $color_normal Power Source$color_end slot.<br>"
-               ."* $color_object Progression$color_end - Progression by expansion is unlocked per-account, rather than per-character. Right now, the maximum available expansion is " . GetMaxExpansionName() . ".<br>"
+               ."* $color_object Progression$color_end - Progression by expansion is unlocked per-account, rather than per-character. Right now, the maximum available expansion is {max_expansion}.<br>"
                ."* $color_object Fast Travel$color_end - $color_normal Magus Tearel$color_end in $color_normal The Bazaar$color_end can use his Magic Map to transport you to various locations. You start with a number of common locations unlocked, "
                ."and you can unlock more by visiting $color_normal Rune Circles$color_end scattered throughout the world.<br>"
                ."* $color_object Large Bags$color_end - Bags greater than size 10 are available, Find $color_enchanted Enchanted$color_end or $color_legendary Legendary$color_end from mobs!<br>"
@@ -166,8 +167,9 @@ sub dispatch_popup {
 
     my $title = $popups_title{$popup_id};
     my $text = $popups_text{$popup_id};
-    # NMS: filled in on display; the limit is a server rule and other plugins may not be loaded yet when this file is
+    # NMS: filled in on display; the limits are server rules and other plugins may not be loaded yet when this file is
     $text =~ s/\{max_classes\}/plugin::GetMaxClasses()/ge;
+    $text =~ s/\{max_expansion\}/GetMaxExpansionName()/ge;
     my $negative_id = $popup_id + 9;
     my $buttons = 2;
     my $duration = -1;
