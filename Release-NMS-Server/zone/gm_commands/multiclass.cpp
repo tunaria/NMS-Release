@@ -198,7 +198,7 @@ void command_multiclass(Client *c, const Seperator *sep)
 	std::string class_input = sep->argplus[2];
 	Strings::Trim(class_input);
 
-	const auto class_id =MulticlassParseClassID(class_input);
+	const auto class_id = MulticlassParseClassID(class_input);
 	if (class_id == Class::None) {
 		c->Message(
 			Chat::White,
