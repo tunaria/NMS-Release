@@ -35,7 +35,9 @@ sub EVENT_SAY {
     if ($text=~/blind fate/i) {
         if (plugin::GetClassesCount($client) == 1) {
             plugin::NPCTell("You will be put upon an irrevocable path, impossible to predict. Are you certain that you wish to do this?");
-            plugin::YellowText("WARNING: If you [".quest::saylink('randomize_me_bitch', 1, 'continue')."], you will be assigned three random classes. This decision cannot be reversed.");
+            # NMS: class limit from rule Custom:MaxPlayerClasses
+            my $max_classes = plugin::GetMaxClasses();
+            plugin::YellowText("WARNING: If you [".quest::saylink('randomize_me_bitch', 1, 'continue')."], you will be assigned $max_classes random classes. This decision cannot be reversed.");
         } else {
             plugin::NPCTell("Mortal. You are unsuitable, your fate has already been tainted by your pathetic free will. Begone.");
         }
@@ -58,9 +60,12 @@ sub EVENT_SAY {
                 }
             }
             
-            # Add two random classes first
+            # NMS: class limit from rule Custom:MaxPlayerClasses
+            my $max_classes = plugin::GetMaxClasses();
+
+            # Add all but one random classes first
             my $classes_added = 0;
-            while ($classes_added < 2) {
+            while ($classes_added < $max_classes - 1) {
                 my $random_class = $all_classes[int(rand(@all_classes))];
                 
                 # Make sure we don't add the original class or a class we already added
@@ -73,8 +78,8 @@ sub EVENT_SAY {
             # Now remove the original class
             plugin::RemoveClass($original_class_id, $client);
             
-            # Add a third random class
-            while (plugin::GetClassesCount($client) < 3) {
+            # Add the last random class
+            while (plugin::GetClassesCount($client) < $max_classes) {
                 my $random_class = $all_classes[int(rand(@all_classes))];
                 
                 # Make sure we don't add a class we already have
