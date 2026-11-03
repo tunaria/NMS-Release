@@ -479,6 +479,7 @@ set(gm_command_sources
 	gm_commands/castspellnms.cpp
 	gm_commands/petcmd.cpp
 	gm_commands/toggleimprovedmodels.cpp
+	gm_commands/map.cpp
 )
 
 add_library(gm_commands_zone STATIC ${gm_command_sources})
