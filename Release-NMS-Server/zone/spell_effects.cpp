@@ -4605,6 +4605,11 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses, bool suppress, uint32 su
 
 	for (int i=0; i < EFFECT_COUNT; i++)
 	{
+		// NMS: a suppressed buff faded its effects when it was suppressed, and SPELL_SUPPRESSED
+		// indexes past the end of spells[]: reading it crashes the zone when the suppression expires
+		if(!IsValidSpell(buffs[slot].spellid))
+			break;
+
 		if(IsBlankSpellEffect(buffs[slot].spellid, i))
 			continue;
 
