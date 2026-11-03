@@ -43,7 +43,7 @@ my %popups_text = (
     6280020 => "Welcome to $color_legendary New Multiclass Server$color_end.<br><br>"
                ."You've arrived on the best $color_object Multiclass$color_end, $color_object Solo/Duo$color_end,  $color_object Single-Box$color_end, $color_object Progression$color_end EQEmu server in the world.<br><br>"
                ."$color_normal Features & Information" . $color_end . "<br>"
-               ."* $color_object Multiclassing$color_end - Choose up to three classes, and gain access to all of the skills, abilities, spells, equipment, and alternate advancement of those classes.<br>"
+               ."* $color_object Multiclassing$color_end - Choose up to {max_classes} classes, and gain access to all of the skills, abilities, spells, equipment, and alternate advancement of those classes.<br>"
                ."* $color_object Solo/Duo$color_end - 'Group' content is fully soloable by any class combo. 'Raid' content may need a friend or two, but well-optimized and skilled players will be able to solo.<br>"
                ."* $color_object Single-Box$color_end - Multi-Boxing is NOT allowed on this server, nor is usage of ANY third-party software, such as MQ2. The character limit per IP is not enforced in $color_normal The Bazaar$color_end"
                .", our hub zone, so you may run traders and buyers if you desire!<br>"
@@ -166,6 +166,8 @@ sub dispatch_popup {
 
     my $title = $popups_title{$popup_id};
     my $text = $popups_text{$popup_id};
+    # NMS: filled in on display; the limit is a server rule and other plugins may not be loaded yet when this file is
+    $text =~ s/\{max_classes\}/plugin::GetMaxClasses()/ge;
     my $negative_id = $popup_id + 9;
     my $buttons = 2;
     my $duration = -1;

@@ -1195,6 +1195,7 @@ RULE_CATEGORY(Custom)
 // Multiclassing Engine
 RULE_BOOL(Custom, 	ServerAuthStats, 						true, "Enable this rule in order to send explicit client updates. Requires client dll.")
 RULE_BOOL(Custom, 	MulticlassingEnabled, 					true, "Enable this to enable all multiclass-related tweaks. Requires ServerAuthStats and UseDynamicAATimers for full functionality.")
+RULE_INT(Custom, 	MaxPlayerClasses, 						3, "Maximum number of classes a multiclass character can have (1-16). Used by AddExtraClass and the NMS_multiclass_utils.pl plugin.")
 RULE_BOOL(Custom, 	UseDynamicAATimers, 					true, "Enable using dynamic AA timers. Required to deconflict multiclass AA timers")
 
 // NMS Options
