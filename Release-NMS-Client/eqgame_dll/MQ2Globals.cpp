@@ -40,7 +40,9 @@ bool InitOffsets()
     }
     if (!eqMainAddress) {
         // no eqgame.exe loaded yet
-        HMODULE hLibrary = LoadLibrary("eqmain.dll");
+        // NMS: GetModuleHandle, not LoadLibrary. The extra reference kept eqmain.dll loaded after
+        // login, so MacroQuest never saw it unload and kept using the freed login UI manager.
+        HMODULE hLibrary = GetModuleHandle("eqmain.dll");
         eqMainAddress = (uintptr_t)hLibrary;
     }
     if (!baseAddress)

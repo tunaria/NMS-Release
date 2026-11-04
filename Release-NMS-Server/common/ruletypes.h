@@ -1195,6 +1195,7 @@ RULE_CATEGORY(Custom)
 // Multiclassing Engine
 RULE_BOOL(Custom, 	ServerAuthStats, 						true, "Enable this rule in order to send explicit client updates. Requires client dll.")
 RULE_BOOL(Custom, 	MulticlassingEnabled, 					true, "Enable this to enable all multiclass-related tweaks. Requires ServerAuthStats and UseDynamicAATimers for full functionality.")
+RULE_INT(Custom, 	MaxPlayerClasses, 						3, "Maximum number of classes a multiclass character can have (1-16). Used by AddExtraClass and the NMS_multiclass_utils.pl plugin.")
 RULE_BOOL(Custom, 	UseDynamicAATimers, 					true, "Enable using dynamic AA timers. Required to deconflict multiclass AA timers")
 
 // NMS Options
@@ -1216,6 +1217,7 @@ RULE_INT(Custom,	EoMUnlockCharacterSetCost,				5,		"EoM Cost to unlock a charact
 RULE_INT(Custom,	BaseCharacterSlots,						24,		"Base number of character slots which players have access to.")
 RULE_INT(Custom,	EoMUnlockCharacterSlots,				12,		"Maximum number of character slots which a player can unlock with EoM.")
 RULE_INT(Custom,	EoMUnlockCharacterSlotCost,				5,		"EoM Cost to unlock a character slot")
+RULE_INT(Custom,	MaxProgressionExpansion,				4,		"Highest expansion players can unlock through progression (0 = Classic, 1 = Kunark, 2 = Velious, 3 = Luclin, 4 = PoP, 7 = GoD, 8 = OoW, 9 = DoN). Read by NMS_progression_utils.pl; zones outside its atlas, such as the Iksar and Vah Shir home zones, stay open.")
 
 // NMS Launcher Enforcement (Bazaar holding-shard jail for wrong-client / no-4GB / not-launcher)
 

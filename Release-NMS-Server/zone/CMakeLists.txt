@@ -480,6 +480,7 @@ set(gm_command_sources
 	gm_commands/petcmd.cpp
 	gm_commands/toggleimprovedmodels.cpp
 	gm_commands/map.cpp
+	gm_commands/multiclass.cpp
 )
 
 add_library(gm_commands_zone STATIC ${gm_command_sources})

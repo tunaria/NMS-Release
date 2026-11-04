@@ -17,6 +17,7 @@ function event_trade(e)
 		e.self:Say("I see that Sultin has sent you to me.  Very well, here are your gloves.");
 		e.other:Ding();
 		e.other:SummonItem(2355); -- Gleaming Gloves
+		e.other:Faction(344,10,0); -- Beta Neutral
 	end
 	item_lib.return_items(e.self, e.other, e.trade)
 end

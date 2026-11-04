@@ -129,6 +129,7 @@ void command_merchantshop(Client *c, const Seperator *sep);
 void command_modifynpcstat(Client *c, const Seperator *sep);
 void command_movechar(Client *c, const Seperator *sep);
 void command_movement(Client *c, const Seperator *sep);
+void command_multiclass(Client *c, const Seperator *sep); // NMS: GM multiclass management
 void command_myskills(Client *c, const Seperator *sep);
 void command_mysql(Client *c, const Seperator *sep);
 void command_mystats(Client *c, const Seperator *sep);

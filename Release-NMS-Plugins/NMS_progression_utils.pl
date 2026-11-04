@@ -33,6 +33,7 @@ my %atlas = (
     'dalnir'         => 'RoK',
     'charasis'       => 'RoK',
     'kaesora'        => 'RoK',
+    'karnor'         => 'RoK', # NMS: was missing, so it was open in every expansion
 #    'kurn'           => 'RoK',
     'nurga'          => 'RoK',
     'droga'          => 'RoK',
@@ -85,6 +86,8 @@ my %atlas = (
     'ssratemple'     => 'SoL',
     'katta'          => 'SoL',
     'mseru'          => 'SoL',
+    'letalis'        => 'SoL', # NMS: was missing, so it was open in every expansion
+    'maiden'         => 'SoL', # NMS: was missing, so it was open in every expansion
     'thedeep'        => 'SoL',
     'thegrey'        => 'SoL',
     'tenebrous'      => 'SoL',
@@ -116,7 +119,8 @@ my %atlas = (
     'poeartha'       => 'PoP',
     'poearthb'       => 'PoP',
     'potimea'        => 'PoP',
-    'potimeb'        => 'PoP',    
+    'potimeb'        => 'PoP',
+    'powar'          => 'PoP', # NMS: was missing, so it was open in every expansion
 
     'barindu'        => 'GoD',
     'ferubi'         => 'GoD',
@@ -203,6 +207,32 @@ my %STAGE_DESCRIPTIONS = (
     'DoN' => "Dragons of Norrath",
     'FNagafen' => "Fabled Nagafen's Lair",
 );
+
+# NMS: EQEmu expansion number of each stage, the numbering of zone.expansion and of rule
+# Custom:MaxProgressionExpansion. FNagafen is not an expansion and stays out of it.
+my %STAGE_EXPANSIONS = (
+    'RoK' => 1,
+    'SoV' => 2,
+    'SoL' => 3,
+    'PoP' => 4,
+    'GoD' => 7,
+    'OoW' => 8,
+    'DoN' => 9,
+);
+
+# NMS: the server-wide expansion cap is a rule, so changing it needs no script edit
+sub GetMaxProgressionExpansion {
+    return int(quest::get_rule("Custom:MaxProgressionExpansion") || 0);
+}
+
+# NMS: name of the highest expansion players can reach, for player-facing text
+sub GetMaxProgressionExpansionName {
+    my $max_expansion = GetMaxProgressionExpansion();
+    my @open_stages   = sort { $STAGE_EXPANSIONS{$b} <=> $STAGE_EXPANSIONS{$a} }
+        grep { $STAGE_EXPANSIONS{$_} <= $max_expansion } keys %STAGE_EXPANSIONS;
+
+    return @open_stages ? $STAGE_DESCRIPTIONS{$open_stages[0]} : "Classic";
+}
 
 # Convert to a direct lookup hash
 our %DIRECT_LOOKUP;
@@ -475,24 +505,10 @@ sub is_time_locked {
     my $stage = shift;
     my $client = plugin::val('client');
 
-    if (plugin::IsNMS()) {  
-        if ($stage eq 'RoK') {       
-            return 0;
-        }
-
-        if ($stage eq 'SoV') {       
-            return 0;
-        }
-
-        if ($stage eq 'SoL') {       
-            return 0;
-        }
-
-        if ($stage eq 'PoP')  {
-            return 0;
-        }
-
-        return 1;
+    # NMS: stages above rule Custom:MaxProgressionExpansion are locked; FNagafen stays locked
+    if (plugin::IsNMS()) {
+        return 1 unless exists $STAGE_EXPANSIONS{$stage};
+        return $STAGE_EXPANSIONS{$stage} > GetMaxProgressionExpansion() ? 1 : 0;
     }
 
     if ($stage eq 'RoK') {       
