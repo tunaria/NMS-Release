@@ -974,6 +974,7 @@ public:
 	const NmsWaypointsRepository::NmsWaypoints* GetWaypoint(int waypoint_id);
 	bool UnlockWaypoint(int32 waypoint_id);
 	bool UnlockWaypoint(std::string waypoint_shortname);
+	bool ForgetWaypoint(int32 waypoint_id); // NMS: undo UnlockWaypoint for #map remove
 	void SendWaypointList(bool force = true);
 	bool AllowAccountWaypoints();
 	bool CheckWaypointGroupFeature();

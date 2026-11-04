@@ -47,6 +47,18 @@ public:
         return InsertOne(db, e).id > 0;
     }
 
+    // Remove a waypoint from an account; false when the account did not have it
+    static bool RemoveWaypoint(Database& db, uint64 account_id, int32 waypoint_id) {
+        return DeleteWhere(
+            db,
+            fmt::format(
+                "account_id = {} AND waypoint_id = {}",
+                account_id,
+                waypoint_id
+            )
+        ) > 0;
+    }
+
     // Get all waypoint IDs for an account
     static std::vector<int32> GetWaypointIds(Database& db, uint64 account_id) {
         std::vector<int32> waypoint_ids;

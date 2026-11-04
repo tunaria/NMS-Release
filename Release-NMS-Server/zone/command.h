@@ -123,6 +123,7 @@ void command_load_shared_memory(Client *c, const Seperator *sep);
 void command_loc(Client *c, const Seperator *sep);
 void command_logs(Client *c, const Seperator *sep);
 void command_makepet(Client *c, const Seperator *sep);
+void command_map(Client *c, const Seperator *sep); // NMS: GM waypoint management
 void command_memspell(Client *c, const Seperator *sep);
 void command_merchantshop(Client *c, const Seperator *sep);
 void command_modifynpcstat(Client *c, const Seperator *sep);
