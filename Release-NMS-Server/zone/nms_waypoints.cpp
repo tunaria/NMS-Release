@@ -188,6 +188,29 @@ bool Client::UnlockWaypoint(int32 waypoint_id)
 	return added;
 }
 
+// Default waypoints (nms_waypoints_default) are never stored, so they cannot be forgotten: returns false for them.
+bool Client::ForgetWaypoint(int32 waypoint_id)
+{
+	bool removed = false;
+
+	if (AllowAccountWaypoints())
+	{
+		removed = NmsWaypointsAccountRepository::RemoveWaypoint(database, AccountID(), waypoint_id);
+	}
+	else
+	{
+		removed = NmsWaypointsCharacterRepository::RemoveWaypoint(database, CharacterID(), waypoint_id);
+	}
+
+	if (removed)
+	{
+		LogWaypointsDetail("Forgot waypoint [{}] for [{}]", waypoint_id, GetCleanName());
+		m_unlocked_waypoints.clear();
+	}
+
+	return removed;
+}
+
 void Client::SendWaypointList(bool force)
 {
 	auto &all_waypoints = zone->GetAllWaypoints();
