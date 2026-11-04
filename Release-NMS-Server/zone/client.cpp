@@ -6197,12 +6197,14 @@ std::string Client::GetPetVanityName(int class_id) {
 
 bool Client::KeyRingRemove(uint32 item_id)
 {
+	// NMS: pass end() too; erase(end()) is UB when the key is missing, and duplicates were left behind
 	keyring.erase(
 		std::remove(
 			keyring.begin(),
 			keyring.end(),
 			item_id
-		)
+		),
+		keyring.end()
 	);
 
 	return KeyringRepository::DeleteWhere(
