@@ -960,12 +960,12 @@ my @PROGRESSION_ARGUMENTS = (
     [ 'sol'     => 3 ],
     [ 'power'   => 4 ],
     [ 'pop'     => 4 ],
+    [ 'discord' => 5 ],
+    [ 'god'     => 5 ],
+    [ 'omens'   => 6 ],
+    [ 'oow'     => 6 ],
 );
 my %PROGRESSION_LEVELS = map { $_->[0] => $_->[1] } @PROGRESSION_ARGUMENTS;
-
-# NMS: stages after Planes of Power are time-locked (GoD) or disabled (OoW, DoN) on NMS,
-# so setting them would have no effect
-my %LOCKED_PROGRESSION_ARGUMENTS = map { $_ => 1 } qw(discord god omens oow);
 
 # NMS: explorer-path items each bazaar stage NPC collects, one account bucket "<item id>-flag" per item.
 # Same ids as bazaar/A_Lost_Iksar.pl, Coldain_Messenger.pl, A_Knight_of_Luclin.pl and A_Planar_Projection.pl.
@@ -1048,10 +1048,21 @@ sub DescribeProgressionLevel {
     return $STAGE_DESCRIPTIONS{$EXPANSION_STAGES[$level - 1]};
 }
 
-# NMS: #progression usage with one saylink per argument; clicking one runs "#progression <argument>".
-# Bracketed text would become a single saylink (Chat:AutoInjectSaylinksToClientMessage), so no brackets.
+# NMS: a progression level is locked when its highest stage is time-locked, which on NMS means
+# above rule Custom:MaxProgressionExpansion. Setting it would leave that stage closed anyway.
+sub IsProgressionLevelLocked {
+    my $level = shift;
+
+    return 0 if $level == 0;
+    return is_time_locked($EXPANSION_STAGES[$level - 1]) ? 1 : 0;
+}
+
+# NMS: #progression usage with one saylink per argument the server allows; clicking one runs
+# "#progression <argument>". Bracketed text would become a single saylink
+# (Chat:AutoInjectSaylinksToClientMessage), so no brackets.
 sub GetProgressionUsage {
-    my @links = map { quest::saylink("#progression $_->[0]", 0, $_->[0]) } @PROGRESSION_ARGUMENTS;
+    my @links = map { quest::saylink("#progression $_->[0]", 0, $_->[0]) }
+        grep { !IsProgressionLevelLocked($_->[1]) } @PROGRESSION_ARGUMENTS;
 
     return "Usage: #progression " . join(" | ", @links)
         . " - Sets the account progression of your target (or yourself). Without an argument it shows the current one.";
@@ -1187,18 +1198,22 @@ sub ProgressionCommand {
         return;
     }
 
-    if ($LOCKED_PROGRESSION_ARGUMENTS{$argument}) {
-        plugin::YellowText("'$argument' is time-locked or disabled on this server. The highest progression is power|pop.", $gm);
-        return;
-    }
-
     if (!exists $PROGRESSION_LEVELS{$argument}) {
         plugin::YellowText("Unknown progression '$argument'.", $gm);
         plugin::YellowText(GetProgressionUsage(), $gm);
         return;
     }
 
-    my $level       = $PROGRESSION_LEVELS{$argument};
+    my $level = $PROGRESSION_LEVELS{$argument};
+
+    if (IsProgressionLevelLocked($level)) {
+        plugin::YellowText(
+            "'$argument' is locked on this server. The highest progression is " . GetMaxProgressionExpansionName() . ".",
+            $gm
+        );
+        return;
+    }
+
     my $complete    = SetAccountProgression($target, $level);
     my $description = DescribeProgressionLevel($level);
 
