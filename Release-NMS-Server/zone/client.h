@@ -602,7 +602,7 @@ public:
 	int64 CalcManaRegenCap() final;
 
 	uint32 GetClassesBits() const;
-	bool   AddExtraClass(int class_id);
+	bool   AddExtraClass(int class_id, bool ignore_limit = false); // NMS: ignore_limit for #multiclass forceadd
 	bool   RemoveExtraClass(int class_id);
 
 	// guild pool regen shit. Sends a SpawnAppearance with a value that regens to value * 0.001
@@ -1170,6 +1170,7 @@ public:
 	void AutoGrantAAPoints();
 	void GrantAllAAPoints(uint8 unlock_level = 0, bool skip_grant_only = false);
 	bool HasAlreadyPurchasedRank(AA::Rank* rank);
+	bool HasRoomForAlternateAdvancementAbility(AA::Rank* rank); // NMS
 	void ListPurchasedAAs(Client *to, std::string search_criteria = std::string());
 
 	bool SendGMCommand(std::string message, bool ignore_status = false);
