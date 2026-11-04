@@ -6,6 +6,7 @@ static void MulticlassSendUsage(Client *c)
 {
 	c->Message(Chat::White, "Usage: #multiclass list - List the classes of your target (or yourself)");
 	c->Message(Chat::White, "Usage: #multiclass add [Class ID|Name|Abbreviation] - Add a class to your target (or yourself)");
+	c->Message(Chat::White, "Usage: #multiclass forceadd [Class ID|Name|Abbreviation] - Same as add, even past the class limit (rule Custom:MaxPlayerClasses)");
 	c->Message(Chat::White, "Usage: #multiclass remove [Class ID|Name|Abbreviation] - Remove a class from your target (or yourself)");
 }
 
@@ -54,7 +55,7 @@ static void MulticlassList(Client *c, Client *t)
 	);
 }
 
-static void MulticlassAdd(Client *c, Client *t, uint8 class_id)
+static void MulticlassAdd(Client *c, Client *t, uint8 class_id, bool ignore_limit)
 {
 	if (t->HasClass(class_id)) {
 		c->Message(
@@ -70,7 +71,7 @@ static void MulticlassAdd(Client *c, Client *t, uint8 class_id)
 	}
 
 	// AddExtraClass owns the class limit, so with the checks above a failure means the limit was reached.
-	if (!t->AddExtraClass(class_id)) {
+	if (!t->AddExtraClass(class_id, ignore_limit)) {
 		c->Message(
 			Chat::White,
 			fmt::format(
@@ -83,20 +84,25 @@ static void MulticlassAdd(Client *c, Client *t, uint8 class_id)
 		return;
 	}
 
+	const int  max_classes = RuleI(Custom, MaxPlayerClasses);
+	const bool past_limit  = static_cast<int>(std::bitset<32>(t->GetClassesBits()).count()) > max_classes;
+
 	LogInfo(
-		"Class [{}] ([{}]) added by [{}] to [{}]",
+		"Class [{}] ([{}]) added by [{}] to [{}]{}",
 		GetClassIDName(class_id),
 		class_id,
 		c->GetCleanName(),
-		t->GetCleanName()
+		t->GetCleanName(),
+		past_limit ? fmt::format(" past the class limit [{}]", max_classes) : ""
 	);
 
 	c->Message(
 		Chat::White,
 		fmt::format(
-			"Added the {} class to {}.",
+			"Added the {} class to {}{}.",
 			GetClassIDName(class_id),
-			c->GetTargetDescription(t)
+			c->GetTargetDescription(t),
+			past_limit ? fmt::format(", past the class limit of {}", max_classes) : ""
 		).c_str()
 	);
 
@@ -181,16 +187,17 @@ void command_multiclass(Client *c, const Seperator *sep)
 		t = c->GetTarget()->CastToClient();
 	}
 
-	const bool is_list   = !strcasecmp(sep->arg[1], "list");
-	const bool is_add    = !strcasecmp(sep->arg[1], "add");
-	const bool is_remove = !strcasecmp(sep->arg[1], "remove");
+	const bool is_list      = !strcasecmp(sep->arg[1], "list");
+	const bool is_add       = !strcasecmp(sep->arg[1], "add");
+	const bool is_force_add = !strcasecmp(sep->arg[1], "forceadd");
+	const bool is_remove    = !strcasecmp(sep->arg[1], "remove");
 
 	if (is_list) {
 		MulticlassList(c, t);
 		return;
 	}
 
-	if ((!is_add && !is_remove) || arguments < 2) {
+	if ((!is_add && !is_force_add && !is_remove) || arguments < 2) {
 		MulticlassSendUsage(c);
 		return;
 	}
@@ -207,8 +214,8 @@ void command_multiclass(Client *c, const Seperator *sep)
 		return;
 	}
 
-	if (is_add) {
-		MulticlassAdd(c, t, class_id);
+	if (is_add || is_force_add) {
+		MulticlassAdd(c, t, class_id, is_force_add);
 	} else {
 		MulticlassRemove(c, t, class_id);
 	}
