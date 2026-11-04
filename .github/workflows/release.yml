@@ -1,0 +1,98 @@
+# Builds the server (Windows x64 and Linux x64) and the client add-on (dinput8.dll, Win32)
+# and attaches them to a GitHub Release. Runs on a version tag (v*) or by hand from the
+# Actions tab (by hand: the files are kept as build artifacts and no release is made).
+name: Release binaries
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows-server:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Configure
+        run: cmake -S Release-NMS-Server -B build -G "Visual Studio 17 2022" -A x64 -DEQEMU_BUILD_LOGIN=ON
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force out | Out-Null
+          Copy-Item build/bin/Release/*.exe out/
+          Copy-Item build/bin/Release/*.dll out/ -ErrorAction SilentlyContinue
+          Compress-Archive -Path out/* -DestinationPath NMS-Server-windows-x64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NMS-Server-windows-x64
+          path: NMS-Server-windows-x64.zip
+
+  linux-server:
+    runs-on: ubuntu-22.04
+    container:
+      image: akkadius/eqemu-server:v15
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build
+        run: |
+          cd Release-NMS-Server && mkdir -p build && cd build
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+            -DEQEMU_BUILD_SERVER=ON -DEQEMU_BUILD_LOGIN=ON -DEQEMU_BUILD_CLIENT_FILES=ON \
+            -DEQEMU_BUILD_LUA=ON -DEQEMU_BUILD_PERL=ON -DEQEMU_BUILD_ZLIB=ON \
+            -DEQEMU_BUILD_HC=OFF -DEQEMU_BUILD_TESTS=OFF -DEQEMU_SANITIZE_LUA_LIBS=ON ..
+          ninja
+      - name: Package
+        run: tar -czf NMS-Server-linux-x64.tar.gz -C Release-NMS-Server/build bin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NMS-Server-linux-x64
+          path: NMS-Server-linux-x64.tar.gz
+
+  windows-client:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - name: Build dinput8.dll
+        run: msbuild Release-NMS-Client/eqgame_dll.sln /t:Rebuild /p:Configuration=Release /p:Platform=Win32 /m
+      - name: Package
+        shell: pwsh
+        run: |
+          $dll = Get-ChildItem -Recurse -Path Release-NMS-Client -Filter dinput8.dll |
+                 Where-Object { $_.FullName -match '\\Release\\' -and $_.FullName -notmatch 'ClientFiles' } |
+                 Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if (-not $dll) { throw "dinput8.dll was not built" }
+          New-Item -ItemType Directory -Force out | Out-Null
+          Copy-Item $dll.FullName out/dinput8.dll
+          Compress-Archive -Path out/* -DestinationPath NMS-Client-dinput8-win32.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NMS-Client-dinput8-win32
+          path: NMS-Client-dinput8-win32.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows-server, linux-server, windows-client]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        run: cd dist && sha256sum * > sha256sums.txt && cat sha256sums.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
