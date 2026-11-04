@@ -14515,6 +14515,12 @@ uint32 Client::GetClassesBits() const
 	}
 }
 
+// NMS: plugin::GetMaxClasses clamps the rule the same way, so the server and the quests report one limit
+int Client::GetMaxPlayerClasses()
+{
+	return EQ::Clamp(RuleI(Custom, MaxPlayerClasses), 1, static_cast<int>(Class::PLAYER_CLASS_COUNT));
+}
+
 bool Client::AddExtraClass(int class_id, bool ignore_limit) {
 	if (RuleB(Custom, MulticlassingEnabled) && class_id >= Class::Warrior && class_id <= Class::Berserker) {
 		int classes_bits = GetClassesBits();
@@ -14530,7 +14536,7 @@ bool Client::AddExtraClass(int class_id, bool ignore_limit) {
 		int n_class_bit = GetPlayerClassBit(class_id);
 
 		// NMS: limit read from a rule so quests and server share one value; GMs can force past it
-		if ((!ignore_limit && class_count >= RuleI(Custom, MaxPlayerClasses)) || (classes_bits & n_class_bit)) {
+		if ((!ignore_limit && class_count >= GetMaxPlayerClasses()) || (classes_bits & n_class_bit)) {
 			return false;
 		}
 		else {

@@ -49,7 +49,7 @@ static void MulticlassList(Client *c, Client *t)
 			c->GetTargetDescription(t, TargetDescriptionType::UCYou),
 			c == t ? "have" : "has",
 			class_names.size(),
-			RuleI(Custom, MaxPlayerClasses),
+			Client::GetMaxPlayerClasses(),
 			Strings::Join(class_names, ", ")
 		).c_str()
 	);
@@ -78,13 +78,13 @@ static void MulticlassAdd(Client *c, Client *t, uint8 class_id, bool ignore_limi
 				"{} already {} the maximum of {} classes (rule Custom:MaxPlayerClasses). Remove one first.",
 				c->GetTargetDescription(t, TargetDescriptionType::UCYou),
 				c == t ? "have" : "has",
-				RuleI(Custom, MaxPlayerClasses)
+				Client::GetMaxPlayerClasses()
 			).c_str()
 		);
 		return;
 	}
 
-	const int  max_classes = RuleI(Custom, MaxPlayerClasses);
+	const int  max_classes = Client::GetMaxPlayerClasses();
 	const bool past_limit  = static_cast<int>(std::bitset<32>(t->GetClassesBits()).count()) > max_classes;
 
 	LogInfo(
