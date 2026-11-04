@@ -4333,7 +4333,11 @@ void Mob::DoBuffTic(const Buffs_Struct &buff, int slot, Mob *caster)
 				}
 			}
 
-			if (!caster || !PassCharismaCheck(caster, buff.spellid)) {
+			// NMS: the break check above may have faded the charm; PassCharismaCheck would then read spells[]
+			// out of bounds through the emptied slot and crash the zone. The hate list cleanup still runs
+			const bool charm_broke = buff.spellid != spell.id;
+
+			if (charm_broke || !caster || !PassCharismaCheck(caster, buff.spellid)) {
 				BuffFadeByEffect(SE_Charm);
 
 				// Remove from hate list of any NPC's hate list and remove all NPCs this hate list
@@ -4356,6 +4360,12 @@ void Mob::DoBuffTic(const Buffs_Struct &buff, int slot, Mob *caster)
 				} else if (!TryFadeEffect(slot)) {
 					BuffFadeBySlot(slot);
 				}
+			}
+
+			// NMS: the break check above may have faded the root; its slot then holds SPELL_UNKNOWN and the
+			// upstream check below would read spells[] out of bounds and crash the zone
+			if (buff.spellid != spell.id) {
+				break;
 			}
 
 			/* Root formula derived from extensive personal live parses - Kayen
@@ -4385,6 +4395,12 @@ void Mob::DoBuffTic(const Buffs_Struct &buff, int slot, Mob *caster)
 				} else if (!TryFadeEffect(slot)) {
 					BuffFadeBySlot(slot);
 				}
+			}
+
+			// NMS: the break check above may have faded the fear; its slot then holds SPELL_UNKNOWN and the
+			// upstream check below would read spells[] out of bounds and crash the zone
+			if (buff.spellid != spell.id) {
+				break;
 			}
 
 			if (zone->random.Roll(RuleI(Spells, FearBreakCheckChance))) {
