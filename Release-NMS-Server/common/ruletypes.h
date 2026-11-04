@@ -1217,6 +1217,7 @@ RULE_INT(Custom,	EoMUnlockCharacterSetCost,				5,		"EoM Cost to unlock a charact
 RULE_INT(Custom,	BaseCharacterSlots,						24,		"Base number of character slots which players have access to.")
 RULE_INT(Custom,	EoMUnlockCharacterSlots,				12,		"Maximum number of character slots which a player can unlock with EoM.")
 RULE_INT(Custom,	EoMUnlockCharacterSlotCost,				5,		"EoM Cost to unlock a character slot")
+RULE_INT(Custom,	MaxProgressionExpansion,				4,		"Highest expansion players can unlock through progression (0 = Classic, 1 = Kunark, 2 = Velious, 3 = Luclin, 4 = PoP, 7 = GoD, 8 = OoW, 9 = DoN). Read by NMS_progression_utils.pl; zones outside its atlas, such as the Iksar and Vah Shir home zones, stay open.")
 
 // NMS Launcher Enforcement (Bazaar holding-shard jail for wrong-client / no-4GB / not-launcher)
 
