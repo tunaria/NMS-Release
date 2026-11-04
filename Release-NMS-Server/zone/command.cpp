@@ -174,7 +174,7 @@ int command_init(void)
 		command_add("movechar", "[Character ID|Character Name] [Zone ID|Zone Short Name] - Move an offline character to the specified zone", AccountStatus::Guide, command_movechar) ||
 		command_add("movement", "Various movement commands", AccountStatus::GMMgmt, command_movement) ||
 		// NMS: GM multiclass management
-		command_add("multiclass", "[list|add|remove] [Class ID|Name|Abbreviation] - List, add or remove classes of your target (or yourself)", AccountStatus::GMAdmin, command_multiclass) ||
+		command_add("multiclass", "[list|add|forceadd|remove] [Class ID|Name|Abbreviation] - List, add or remove classes of your target (or yourself); forceadd ignores the class limit", AccountStatus::GMAdmin, command_multiclass) ||
 		command_add("myskills", "Show details about your current skill levels", AccountStatus::Player, command_myskills) ||
 		command_add("mysql", "[Help|Query] [SQL Query] - Mysql CLI, see 'Help' for options.", AccountStatus::GMImpossible, command_mysql) ||
 		command_add("mystats", "Show details about you or your pet", AccountStatus::Guide, command_mystats) ||
