@@ -555,6 +555,11 @@ void Client::ResetAA()
 	int slot_id = 0;
 
 	for (auto& rank_value: aa_ranks) {
+		// NMS: multiclass characters can own more abilities than the profile holds
+		if (slot_id >= MAX_PP_AA_ARRAY) {
+			break;
+		}
+
 		auto ability_rank = zone->GetAlternateAdvancementAbilityAndRank(rank_value.first, rank_value.second.first);
 		auto ability      = ability_rank.first;
 		auto rank         = ability_rank.second;
@@ -1146,6 +1151,12 @@ void Client::SendAlternateAdvancementPoints() {
 		if(ranks) {
 			AA::Rank *rank = aa.second->GetRankByPointsSpent(ranks);
 			if(rank) {
+				// NMS: the packet holds MAX_PP_AA_ARRAY entries; writing past it corrupts the heap and crashes the zone
+				if(i >= MAX_PP_AA_ARRAY) {
+					LogError("[{}] owns more than [{}] AA abilities, the rest are not sent", GetCleanName(), MAX_PP_AA_ARRAY);
+					break;
+				}
+
 				aa2->aa_list[i].AA = rank->id;
 				aa2->aa_list[i].value = rank->total_cost;
 				aa2->aa_list[i].charges = charges;
@@ -1396,6 +1407,12 @@ void Client::PurchaseAlternateAdvancementRank(int rank_id) {
 	}
 
 	if(!rank->base_ability) {
+		return;
+	}
+
+	// NMS: CanPurchaseAlternateAdvancementRank refuses this silently; tell the player why
+	if(!HasRoomForAlternateAdvancementAbility(rank)) {
+		Message(Chat::Red, fmt::format("You cannot learn more than {} different alternate abilities.", MAX_PP_AA_ARRAY).c_str());
 		return;
 	}
 
@@ -1813,14 +1830,22 @@ bool ZoneDatabase::LoadAlternateAdvancement(Client *c) {
 		rank = ability->GetRankByPointsSpent(aa_value);
 
 		if (c->CanUseAlternateAdvancementRank(rank)) {
-			c->GetPP().aa_array[slot_id].AA      = aa_id;
-			c->GetPP().aa_array[slot_id].value   = aa_value;
-			c->GetPP().aa_array[slot_id].charges = charges;
+			// NMS: keep abilities past the profile limit server side instead of writing past aa_array
+			if (slot_id < MAX_PP_AA_ARRAY) {
+				c->GetPP().aa_array[slot_id].AA      = aa_id;
+				c->GetPP().aa_array[slot_id].value   = aa_value;
+				c->GetPP().aa_array[slot_id].charges = charges;
+			}
 
 			c->SetAA(aa_id, aa_value, charges);
 
 			slot_id++;
 		}
+	}
+
+	// NMS: abilities past the limit still work but the client does not see them
+	if (slot_id > MAX_PP_AA_ARRAY) {
+		LogError("[{}] owns [{}] AA abilities, only [{}] fit in the player profile", c->GetCleanName(), slot_id, MAX_PP_AA_ARRAY);
 	}
 
 	return true;
@@ -2035,6 +2060,11 @@ bool Mob::CanPurchaseAlternateAdvancementRank(AA::Rank *rank, bool check_price, 
 	}
 
 	if (IsClient() && CastToClient()->HasAlreadyPurchasedRank(rank)) {
+		return false;
+	}
+
+	// NMS: covers quest grants too, not only purchases
+	if (IsClient() && !CastToClient()->HasRoomForAlternateAdvancementAbility(rank)) {
 		return false;
 	}
 
@@ -2622,6 +2652,16 @@ bool Client::HasAlreadyPurchasedRank(AA::Rank* rank) {
 	}
 
 	return false;
+}
+
+// NMS: the client's AA list holds MAX_PP_AA_ARRAY abilities and multiclass characters can reach it
+bool Client::HasRoomForAlternateAdvancementAbility(AA::Rank* rank)
+{
+	if (aa_ranks.find(rank->base_ability->id) != aa_ranks.end()) {
+		return true;
+	}
+
+	return aa_ranks.size() < MAX_PP_AA_ARRAY;
 }
 
 void Client::ListPurchasedAAs(Client *to, std::string search_criteria)
