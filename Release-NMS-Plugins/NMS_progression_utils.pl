@@ -397,18 +397,8 @@ sub SetSubflag {
                 quest::set_data($client->AccountID() . "-progression-title-$stage", 1);
             }
             
-            if ($stage eq 'RoK') {
-                $client->UnlockWaypoint("dreadlands");
-            }
-
-            if ($stage eq 'SoV') {
-                $client->KeyRingAdd(20884);
-                $client->UnlockWaypoint("iceclad");
-            }
-
-            if ($stage eq 'PoP') {     
-                $client->KeyRingAdd(22198);
-            }
+            # NMS: moved to GrantStageRewards so #progression grants the same rewards
+            GrantStageRewards($client, $stage);
 
             UpdateCharMaxLevel($client);
             UpdateRaceClassLocks($client);
@@ -639,17 +629,18 @@ sub UpdateCharMaxLevel
 {
     my $client = shift;
     my $update = 0;
-    my $CharMaxLevel = $client->GetBucket("CharMaxLevel") || 51;
+    # NMS: start from the base cap, not the stored one, so going back to classic (#progression) lowers it
+    my $CharMaxLevel = 51;
 
     if (plugin::IsNMS()) {
-        $CharMaxLevel = $client->GetBucket("CharMaxLevel") || 50;
+        $CharMaxLevel = 50;
     }
 
     if (plugin::IsSeasonal($client)) {
         $CharMaxLevel = 51;
 
         if (plugin::IsNMS()) {
-            $CharMaxLevel = $client->GetBucket("CharMaxLevel") || 50;
+            $CharMaxLevel = 50;
         }
 
         if (is_stage_complete($client, 'RoK') && !is_time_locked('RoK')) {
@@ -677,7 +668,8 @@ sub UpdateCharMaxLevel
     if (($old_max || 0) != $CharMaxLevel) {
         $client->SetBucket("CharMaxLevel", $CharMaxLevel);        
         if (defined $old_max) {
-            plugin::YellowText("Your Level Cap has been set to $CharMaxLevel.");
+            # NMS: tell the character whose cap changed, not whoever ran the event (#progression)
+            plugin::YellowText("Your Level Cap has been set to $CharMaxLevel.", $client);
         }
     }
 }
@@ -947,5 +939,291 @@ sub SetProgressFlag {
     } else {
         # Set the regular progress flag
         quest::set_data($client->AccountID() . "-progress-flag-$stage", $flag_value);
+    }
+}
+
+# NMS: #progression GM command. Sets the account progression to an exact stage, up or down.
+
+# NMS: expansion stages in unlock order. A progression level is how many of them are unlocked
+# (0 = classic), the same number UpdateRaceClassLocks stores in the account-progression bucket.
+my @EXPANSION_STAGES = qw(RoK SoV SoL PoP GoD OoW DoN);
+
+# NMS: #progression arguments in the order the usage lists them, with the same expansion names
+# as #map, and the progression level each one sets
+my @PROGRESSION_ARGUMENTS = (
+    [ 'classic' => 0 ],
+    [ 'kunark'  => 1 ],
+    [ 'rok'     => 1 ],
+    [ 'velious' => 2 ],
+    [ 'sov'     => 2 ],
+    [ 'luclin'  => 3 ],
+    [ 'sol'     => 3 ],
+    [ 'power'   => 4 ],
+    [ 'pop'     => 4 ],
+    [ 'discord' => 5 ],
+    [ 'god'     => 5 ],
+    [ 'omens'   => 6 ],
+    [ 'oow'     => 6 ],
+);
+my %PROGRESSION_LEVELS = map { $_->[0] => $_->[1] } @PROGRESSION_ARGUMENTS;
+
+# NMS: explorer-path items each bazaar stage NPC collects, one account bucket "<item id>-flag" per item.
+# Same ids as bazaar/A_Lost_Iksar.pl, Coldain_Messenger.pl, A_Knight_of_Luclin.pl and A_Planar_Projection.pl.
+my %STAGE_EXPLORER_ITEMS = (
+    'RoK' => [
+        2028043, # item: Elemental Binder (Legendary)
+        2010366, # item: Djarn's Amethyst Ring (Legendary)
+        2010142, # item: Crown of the Froglok Kings (Legendary)
+        2026997, # item: Scalp of the Ghoul Lord (Legendary)
+    ],
+    'SoV' => [
+        2005772, # item: Mask of Secrets (Legendary)
+        2003201, # item: Sebilite Scale Mask (Legendary)
+        2001414, # item: Helot Skull Helm (Legendary)
+        2004578, # item: Helm of Rile (Legendary)
+    ],
+    'SoL' => [
+        2027200, # item: Stronghorn's Horn (Legendary)
+        2004189, # item: Shackle of Auctoritias (Legendary)
+        2025319, # item: Sword of Pain (Legendary)
+        2024741, # item: Siren Hair Earring (Legendary)
+    ],
+    'PoP' => [
+        2008121, # item: Burning Ring (Legendary)
+        2028708, # item: Shadel Bandit Ring (Legendary)
+        2026826, # item: Zekhas' Katar (Legendary)
+        2061227, # item: Blade of Insanity (Legendary)
+    ],
+);
+
+# NMS: keys GrantStageRewards puts on the keyring when a stage is completed
+my $KEY_OF_VEESHAN     = 20884; # item: Key of Veeshan (Veeshan's Peak), granted by SoV
+my $SCEPTER_OF_SHADOWS = 22198; # item: The Scepter of Shadows (Vex Thal), granted by PoP
+my %STAGE_KEYS = (
+    'SoV' => $KEY_OF_VEESHAN,
+    'PoP' => $SCEPTER_OF_SHADOWS,
+);
+
+# NMS: zone flag the key quest sets together with the key, proof the character earned it
+my %KEY_QUEST_ZONE_FLAGS = (
+    $KEY_OF_VEESHAN => 108, # zone: veeshan, flagged by Emperor Ganak (trakanon)
+);
+
+# NMS: rewards for completing a stage, shared by SetSubflag and #progression
+sub GrantStageRewards {
+    my ($client, $stage) = @_;
+
+    if ($stage eq 'RoK') {
+        $client->UnlockWaypoint("dreadlands");
+    }
+
+    if ($stage eq 'SoV') {
+        $client->KeyRingAdd($KEY_OF_VEESHAN);
+        $client->UnlockWaypoint("iceclad");
+    }
+
+    if ($stage eq 'PoP') {
+        $client->KeyRingAdd($SCEPTER_OF_SHADOWS);
+    }
+}
+
+# NMS: highest stage the account has unlocked without gaps, as a progression level (0 = classic)
+sub GetAccountProgressionLevel {
+    my $client = shift;
+    my $level  = 0;
+
+    foreach my $stage (@EXPANSION_STAGES) {
+        last unless is_stage_complete($client, $stage);
+        $level++;
+    }
+
+    return $level;
+}
+
+# NMS: readable name of a progression level for the #progression messages
+sub DescribeProgressionLevel {
+    my $level = shift;
+
+    return "Classic (no expansion unlocked)" if $level == 0;
+    return $STAGE_DESCRIPTIONS{$EXPANSION_STAGES[$level - 1]};
+}
+
+# NMS: a progression level is locked when its highest stage is time-locked, which on NMS means
+# above rule Custom:MaxProgressionExpansion. Setting it would leave that stage closed anyway.
+sub IsProgressionLevelLocked {
+    my $level = shift;
+
+    return 0 if $level == 0;
+    return is_time_locked($EXPANSION_STAGES[$level - 1]) ? 1 : 0;
+}
+
+# NMS: #progression usage with one saylink per argument the server allows; clicking one runs
+# "#progression <argument>". Bracketed text would become a single saylink
+# (Chat:AutoInjectSaylinksToClientMessage), so no brackets.
+sub GetProgressionUsage {
+    my @links = map { quest::saylink("#progression $_->[0]", 0, $_->[0]) }
+        grep { !IsProgressionLevelLocked($_->[1]) } @PROGRESSION_ARGUMENTS;
+
+    return "Usage: #progression " . join(" | ", @links)
+        . " - Sets the account progression of your target (or yourself). Without an argument it shows the current one.";
+}
+
+# NMS: sets the account progression to exactly $level stages (0 = classic), raising or lowering it.
+# Stages up to $level get every boss flag and their rewards; the stages above it are cleared.
+# Returns 0 when the other characters of the account could not be updated.
+sub SetAccountProgression {
+    my ($client, $level) = @_;
+    my $complete = 1;
+
+    foreach my $index (0 .. $#EXPANSION_STAGES) {
+        my $stage = $EXPANSION_STAGES[$index];
+
+        if ($index < $level) {
+            my %objectives = map { $_ => 1 } @{$STAGE_PREREQUISITES{$stage}};
+            SetProgressFlag($client, $stage, plugin::SerializeHash(%objectives));
+            GrantStageRewards($client, $stage);
+        } elsif (!ClearStageProgress($client, $stage)) {
+            $complete = 0;
+        }
+    }
+
+    quest::set_data($client->AccountID() . "-account-progression", $level);
+    UpdateCharMaxLevel($client);
+
+    # NMS: the server reads CharMaxLevel only when the character zones in, so apply it now
+    if (
+        quest::get_rule("Character:PerCharacterQglobalMaxLevel") ne "true"
+        && quest::get_rule("Character:PerCharacterBucketMaxLevel") eq "true"
+    ) {
+        $client->SetClientMaxLevel(int($client->GetBucket("CharMaxLevel")));
+    }
+
+    return $complete;
+}
+
+# NMS: forgets a stage for the whole account: boss flags, explorer items and the key it grants.
+# Returns 0 when the other characters of the account could not be updated.
+sub ClearStageProgress {
+    my ($client, $stage) = @_;
+    my $account_id = $client->AccountID();
+    my $season_id  = plugin::GetSeasonID();
+
+    # NMS: the same keys GetProgressFlag reads; it also adopts a seasonal character's own flag
+    if (plugin::IsSeasonal($client) && $season_id) {
+        quest::delete_data("$account_id-season-$season_id-progress-flag-$stage");
+        $client->DeleteBucket("progress-flag-$stage");
+    } else {
+        quest::delete_data("$account_id-progress-flag-$stage");
+    }
+
+    foreach my $item_id (@{$STAGE_EXPLORER_ITEMS{$stage} || []}) {
+        $client->DeleteAccountBucket("$item_id-flag");
+    }
+
+    return 1 unless exists $STAGE_KEYS{$stage};
+    return RemoveAccountKey($client, $STAGE_KEYS{$stage});
+}
+
+# NMS: takes a key off the keyring of every character of the account. A character keeps it while it
+# still holds the item (using the door would put it back) or has the zone flag of the key quest.
+# Returns 0 when the other characters of the account could not be updated.
+sub RemoveAccountKey {
+    my ($client, $item_id) = @_;
+    my $base_item_id  = plugin::GetBaseID($item_id);
+    my $quest_zone_id = $KEY_QUEST_ZONE_FLAGS{$item_id} || 0;
+
+    # NMS: check first: KeyRingRemove on a key that is not there erases end() and can crash the zone
+    if (
+        $client->KeyRingCheck($item_id)
+        && !plugin::check_hasitem($client, $item_id)
+        && !($quest_zone_id && $client->HasZoneFlag($quest_zone_id))
+    ) {
+        $client->KeyRingRemove($item_id);
+    }
+
+    # NMS: an account has at most one character online, so the others are offline and nothing holds
+    # their keyring in memory. Same places as check_hasitem, matching any tier of the item.
+    my $dbh = plugin::LoadMysqlServer();
+    return 0 unless $dbh;
+
+    my $sth = $dbh->prepare(
+        'DELETE k FROM keyring k'
+        . ' INNER JOIN character_data c ON c.id = k.char_id'
+        . ' WHERE c.account_id = ? AND c.id <> ? AND k.item_id = ?'
+        . ' AND NOT EXISTS (SELECT 1 FROM inventory i'
+        . ' WHERE i.character_id = c.id AND i.item_id % 1000000 = ?)'
+        . ' AND NOT EXISTS (SELECT 1 FROM sharedbank s'
+        . ' WHERE s.account_id = c.account_id AND s.item_id % 1000000 = ?)'
+        . ' AND NOT EXISTS (SELECT 1 FROM character_corpses cc'
+        . ' INNER JOIN character_corpse_items ci ON ci.corpse_id = cc.id'
+        . ' WHERE cc.charid = c.id AND ci.item_id % 1000000 = ?)'
+        . ' AND NOT EXISTS (SELECT 1 FROM zone_flags z WHERE z.charID = c.id AND z.zoneID = ?)'
+    );
+
+    my $rows;
+    if ($sth) {
+        $rows = $sth->execute(
+            $client->AccountID(),
+            $client->CharacterID(),
+            $item_id,
+            $base_item_id,
+            $base_item_id,
+            $base_item_id,
+            $quest_zone_id
+        );
+        $sth->finish();
+    }
+
+    $dbh->disconnect();
+
+    return defined $rows ? 1 : 0;
+}
+
+# NMS: #progression [stage]. Acts on the targeted player, or on the GM when no player is targeted.
+# global_player.pl checks GM mode and account status before calling it.
+sub ProgressionCommand {
+    my ($gm, $argument) = @_;
+    my $target = $gm->GetTarget();
+    $target = ($target && $target->IsClient()) ? $target->CastToClient() : $gm;
+
+    $argument = lc($argument // '');
+    $argument =~ s/^\s+|\s+$//g;
+
+    my $name = $target->GetCleanName();
+
+    if ($argument eq '') {
+        my $current = DescribeProgressionLevel(GetAccountProgressionLevel($target));
+        plugin::YellowText("Account progression of $name: $current.", $gm);
+        plugin::YellowText(GetProgressionUsage(), $gm);
+        return;
+    }
+
+    if (!exists $PROGRESSION_LEVELS{$argument}) {
+        plugin::YellowText("Unknown progression '$argument'.", $gm);
+        plugin::YellowText(GetProgressionUsage(), $gm);
+        return;
+    }
+
+    my $level = $PROGRESSION_LEVELS{$argument};
+
+    if (IsProgressionLevelLocked($level)) {
+        plugin::YellowText(
+            "'$argument' is locked on this server. The highest progression is " . GetMaxProgressionExpansionName() . ".",
+            $gm
+        );
+        return;
+    }
+
+    my $complete    = SetAccountProgression($target, $level);
+    my $description = DescribeProgressionLevel($level);
+
+    plugin::YellowText("Account progression of $name set to $description.", $gm);
+
+    if (!$complete) {
+        plugin::YellowText("Could not reach the database: the other characters of the account keep their keys.", $gm);
+    }
+
+    if ($target->CharacterID() != $gm->CharacterID()) {
+        plugin::YellowText("Your account progression has been set to $description.", $target);
     }
 }

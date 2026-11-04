@@ -1,3 +1,6 @@
+# NMS: AccountStatus::GMAdmin, the account status #progression requires (the same as #map)
+my $GM_ADMIN_STATUS = 100;
+
 sub EVENT_SIGNAL {
     if ($signal == 666) {
         plugin::UpdateEoMAward($client);
@@ -555,6 +558,14 @@ sub EVENT_CAST_BEGIN {
 
 sub EVENT_SAY {
     if ($client->GetGM()) {
+        # NMS: #progression needs GM mode and GM Admin status. Returning 0 shows everyone else the
+        # usual "Command not recognized", as for a command that does not exist.
+        if ($text =~ /^#progression\b(.*)$/i) {
+            return 0 if $client->Admin() < $GM_ADMIN_STATUS;
+            plugin::ProgressionCommand($client, $1);
+            return 1;
+        }
+
         if ($text=~/#awardtitle\s*(.*)/i) {
             $client->Message(13, "Disregard the command not recognized error.");
             my $arguments = $1; # Captures everything after #awardtitle
