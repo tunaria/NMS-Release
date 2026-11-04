@@ -65,7 +65,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: microsoft/setup-msbuild@v2
       - name: Build dinput8.dll
-        run: msbuild Release-NMS-Client/eqgame_dll.sln /t:Rebuild /p:Configuration=Release /p:Platform=Win32 /m
+        run: msbuild Release-NMS-Client/eqgame_dll.sln /t:Rebuild /p:Configuration=Release /p:Platform=Win32 /p:PlatformToolset=v143 /p:WindowsTargetPlatformVersion=10.0 /m
       - name: Package
         shell: pwsh
         run: |
