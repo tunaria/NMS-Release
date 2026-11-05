@@ -12356,6 +12356,22 @@ std::vector<int> Client::GetScribeableSpells(uint8 min_level, uint8 max_level) {
 	std::vector<int> scribeable_spells;
 	std::unordered_map<uint32, std::vector<uint16>> spell_group_cache = LoadSpellGroupCache(min_level, max_level);
 
+	// NMS: spell-group ranks qualify through any of the character's classes, not only the primary
+	// one, or the extra classes never get them. GetClassesBits() is just the primary class when
+	// Custom:MulticlassingEnabled is off.
+	const auto is_level_within_any_class = [&, classes_bits = GetClassesBits()](uint16 group_spell_id) {
+		for (uint8 class_index = 0; class_index < Class::PLAYER_CLASS_COUNT; ++class_index) {
+			if (
+				(classes_bits & (1 << class_index)) &&
+				EQ::ValueWithin(spells[group_spell_id].classes[class_index], min_level, max_level)
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	};
+
 	for (uint16 spell_id = 0; spell_id < SPDAT_RECORDS; ++spell_id) {
 		bool scribeable = true;
 		if (!IsValidSpell(spell_id)) {
@@ -12433,7 +12449,7 @@ std::vector<int> Client::GetScribeableSpells(uint8 min_level, uint8 max_level) {
 			if (g != spell_group_cache.end()) {
 				for (const auto& s : g->second) {
 					if (
-						EQ::ValueWithin(spells[s].classes[m_pp.class_ - 1], min_level, max_level) &&
+						is_level_within_any_class(s) &&
 						s == spell_id &&
 						scribeable
 					) {
