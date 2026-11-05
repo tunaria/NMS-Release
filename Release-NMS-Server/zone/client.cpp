@@ -12271,11 +12271,30 @@ std::vector<int> Client::GetLearnableDisciplines(uint8 min_level, uint8 max_leve
 			continue;
 		}
 
-		if (max_level && spells[spell_id].classes[m_pp.class_ - 1] > max_level) {
-			continue;
+		// NMS: any of the character's classes can qualify, not only the primary one, or #traindisc and
+		// quest::traindiscs skip the extra classes. GetClassesBits() is just the primary class when
+		// Custom:MulticlassingEnabled is off, so single-class characters keep the old result.
+		const auto classes_bits = GetClassesBits();
+		bool       in_range     = false;
+		for (uint8 class_index = 0; class_index < Class::PLAYER_CLASS_COUNT; ++class_index) {
+			if (!(classes_bits & (1 << class_index))) {
+				continue;
+			}
+
+			const auto class_level = spells[spell_id].classes[class_index];
+			if (max_level && class_level > max_level) {
+				continue;
+			}
+
+			if (min_level > 1 && class_level < min_level) {
+				continue;
+			}
+
+			in_range = true;
+			break;
 		}
 
-		if (min_level > 1 && spells[spell_id].classes[m_pp.class_ - 1] < min_level) {
+		if (!in_range) {
 			continue;
 		}
 
