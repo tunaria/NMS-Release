@@ -49,7 +49,8 @@ sub EVENT_ITEM {
 }
 
 sub Train {
-	if ($status => 80) {
+	# NMS: was "$status => 80" (fat comma, always true), so any player passed the GM status check
+	if ($status >= 80) {
 		$client->Message( 15, "Your experiences across the realm have infused you with increased power and knowledge..." );
 		#:: Set all available skills to maximum for race/class at current level
 		foreach my $skill ( 0 .. 74 ) {
@@ -72,7 +73,8 @@ sub EVENT_SAY {
 	elsif ($text=~/hail/i) {
 		quest::say("Hello $name! Don't let my little friend fool you--he is quite powerful!");
 	}
-	if ($status => 80) {
+	# NMS: was "$status => 80" (fat comma, always true), so any player passed the GM status check
+	if ($status >= 80) {
 		if ($text=~/faction/i) {
 			quest::say("I can adjust your faction.  Hand me 1 copper to lose 500, 1 silver to lose 100, 1 gold to gain 100, and 1 platinum to gain 500--then speak the faction number, or the faction name.");
 		}
