@@ -1370,12 +1370,18 @@ std::optional<int> Client::FindAlternateAdvancementTimer(const AA::Rank *rank)
 	return e->second;
 }
 
-void Client::ResetAlternateAdvancementTimer(int ability) {
-	AA::Rank *rank = zone->GetAlternateAdvancementRank(casting_spell_aa_id);
-	if(rank) {
-		SendAlternateAdvancementTimer(rank->spell_type, 0, time(0));
-		p_timers.Clear(&database, rank->spell_type + pTimerAAStart);
+// NMS: upstream ignored the argument and read casting_spell_aa_id (the interrupt callers pass it anyway),
+// so #resetaa_timer <id> did nothing; it also cleared the DB spell_type instead of the dynamic timer
+bool Client::ResetAlternateAdvancementTimer(int rank_id)
+{
+	const auto timer_id = FindAlternateAdvancementTimer(zone->GetAlternateAdvancementRank(rank_id));
+	if (!timer_id) {
+		return false;
 	}
+
+	SendAlternateAdvancementTimer(*timer_id, 0, static_cast<int>(time(nullptr)));
+	p_timers.Clear(&database, *timer_id + pTimerAAStart);
+	return true;
 }
 
 void Client::ResetAlternateAdvancementTimers() {
