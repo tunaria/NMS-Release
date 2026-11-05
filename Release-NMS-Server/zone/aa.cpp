@@ -1347,6 +1347,29 @@ void Client::ClearDynamicAATimers() {
 }
 
 
+// NMS: the timer an AA's cooldown runs on; unlike GetDynamicAATimer it never assigns a new one
+std::optional<int> Client::FindAlternateAdvancementTimer(const AA::Rank *rank)
+{
+	if (!rank || !rank->base_ability) {
+		return std::nullopt;
+	}
+
+	if (!RuleB(Custom, UseDynamicAATimers)) {
+		return rank->spell_type;
+	}
+
+	if (m_aa_timers_cache.empty()) {
+		GetDynamicAATimers();
+	}
+
+	const auto e = m_aa_timers_cache.find(rank->base_ability->id);
+	if (e == m_aa_timers_cache.end()) {
+		return std::nullopt;
+	}
+
+	return e->second;
+}
+
 void Client::ResetAlternateAdvancementTimer(int ability) {
 	AA::Rank *rank = zone->GetAlternateAdvancementRank(casting_spell_aa_id);
 	if(rank) {
@@ -1395,8 +1418,12 @@ void Client::ResetOnDeathAlternateAdvancement() {
 			continue;
 
 		// since they're dying, we just need to clear the DB
-		if (ability->reset_on_death)
-			p_timers.Clear(&database, rank->spell_type + pTimerAAStart);
+		if (ability->reset_on_death) {
+			// NMS: with dynamic AA timers the cooldown runs on the per-character id; the DB spell_type belongs to another AA
+			if (const auto timer_id = FindAlternateAdvancementTimer(rank)) {
+				p_timers.Clear(&database, *timer_id + pTimerAAStart);
+			}
+		}
 	}
 }
 

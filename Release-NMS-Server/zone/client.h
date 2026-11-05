@@ -1139,6 +1139,7 @@ public:
 	int GetDynamicAATimer(int aa_id);
 	int SetDynamicAATimer(int aa_id);
 	void ClearDynamicAATimers();
+	std::optional<int> FindAlternateAdvancementTimer(const AA::Rank *rank);
 
 	void GetAllToggleAAStatus();
 	void SetToggleAAStatus(int ability_id, bool status);
