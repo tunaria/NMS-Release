@@ -42,7 +42,8 @@ sub EVENT_ITEM {
 		my @prizes = (11668, 59509);
 		foreach $prizes (@prizes) {
 			next if (plugin::check_hasitem($client, $prizes));
-			quest::summonitem(1$prizes);
+			# NMS: was "1$prizes", a syntax error that kept the whole script from loading
+			quest::summonitem($prizes);
 			last;
 		}
 	}
