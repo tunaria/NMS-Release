@@ -6669,6 +6669,22 @@ uint32 Client::GetHighestScribedSpellinSpellGroup(uint32 spell_group)
 std::unordered_map<uint32, std::vector<uint16>> Client::LoadSpellGroupCache(uint8 min_level, uint8 max_level) {
 	std::unordered_map<uint32, std::vector<uint16>> spell_group_cache;
 
+	// NMS: a group qualifies through any of the character's classes, not only the primary one.
+	// GetClassesBits() is just the primary class when Custom:MulticlassingEnabled is off.
+	std::vector<std::string> class_conditions;
+	const auto               classes_bits = GetClassesBits();
+	for (uint8 class_index = 0; class_index < Class::PLAYER_CLASS_COUNT; ++class_index) {
+		if (classes_bits & (1 << class_index)) {
+			class_conditions.emplace_back(
+				fmt::format("classes{} BETWEEN {} AND {}", class_index + 1, min_level, max_level)
+			);
+		}
+	}
+
+	if (class_conditions.empty()) {
+		return spell_group_cache;
+	}
+
 	const auto query = fmt::format(
 		"SELECT a.spellgroup, a.id, a.rank "
 		"FROM spells_new a "
@@ -6677,8 +6693,8 @@ std::unordered_map<uint32, std::vector<uint16>> Client::LoadSpellGroupCache(uint
 		"FROM spells_new "
 		"GROUP BY spellgroup) "
 		"b ON a.spellgroup = b.spellgroup AND a.rank = b.rank "
-		"WHERE a.spellgroup IN (SELECT DISTINCT spellgroup FROM spells_new WHERE spellgroup != 0 and classes{} BETWEEN {} AND {}) ORDER BY `rank` DESC",
-		m_pp.class_, min_level, max_level
+		"WHERE a.spellgroup IN (SELECT DISTINCT spellgroup FROM spells_new WHERE spellgroup != 0 and ({})) ORDER BY `rank` DESC",
+		Strings::Join(class_conditions, " OR ")
 	);
 
 	auto results = content_db.QueryDatabase(query);
