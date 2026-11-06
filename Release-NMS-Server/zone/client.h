@@ -604,6 +604,7 @@ public:
 	uint32 GetClassesBits() const;
 	bool   AddExtraClass(int class_id, bool ignore_limit = false); // NMS: ignore_limit for #multiclass forceadd
 	bool   RemoveExtraClass(int class_id);
+	static int GetMaxPlayerClasses(); // NMS: rule Custom:MaxPlayerClasses clamped to 1-16
 
 	// guild pool regen shit. Sends a SpawnAppearance with a value that regens to value * 0.001
 	void EnableAreaHPRegen(int value);
