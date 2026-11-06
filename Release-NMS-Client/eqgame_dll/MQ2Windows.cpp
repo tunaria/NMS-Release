@@ -323,17 +323,44 @@ void ShutdownMQ2Windows()
 // NMS: some patchers ship an EQUI.xml that already includes our windows (NMS_WaypointsWnd.xml).
 // Adding the same <Include> again loads the window twice and EQ stops with "Error in GUI XML",
 // so GenerateMQUI remembers the includes EQUI.xml has and only adds the missing ones.
+// Whitespace is ignored, so "<Include> NMS_X.xml </Include>" counts. Text inside <!-- --> is not,
+// also across lines: a commented-out include must not keep our window out of the UI.
 static string NMS_ToLower(string text)
 {
     transform(text.begin(), text.end(), text.begin(), [](unsigned char c) { return (char)tolower(c); });
     return text;
 }
 
-static void NMS_RememberInclude(string& seenIncludes, const char* line)
+// Returns the parts of line outside XML comments; inComment carries an open comment to the next line.
+static string NMS_StripXMLComments(const string& line, bool& inComment)
 {
-    string lower = NMS_ToLower(line);
-    if (lower.find("<include>") != string::npos)
-        seenIncludes += lower;
+    string kept;
+    size_t pos = 0;
+    while (pos < line.size()) {
+        if (inComment) {
+            size_t end = line.find("-->", pos);
+            if (end == string::npos)
+                return kept;
+            pos = end + 3;
+            inComment = false;
+        } else {
+            size_t start = line.find("<!--", pos);
+            if (start == string::npos)
+                return kept + line.substr(pos);
+            kept += line.substr(pos, start - pos);
+            pos = start + 4;
+            inComment = true;
+        }
+    }
+    return kept;
+}
+
+static void NMS_RememberInclude(string& seenIncludes, bool& inComment, const char* line)
+{
+    string text = NMS_StripXMLComments(NMS_ToLower(line), inComment);
+    text.erase(remove_if(text.begin(), text.end(), [](unsigned char c) { return isspace(c) != 0; }), text.end());
+    if (text.find("<include>") != string::npos)
+        seenIncludes += text;
 }
 
 static bool NMS_IsIncluded(const string& seenIncludes, const char* filename)
@@ -375,8 +402,9 @@ bool GenerateMQUI()
         return false;
     }
     string seenIncludes; // NMS: includes EQUI.xml already has
+    bool inComment = false; // NMS: inside <!-- --> at the end of the previous line
     while (fgets(Buffer, 2048, forg)) {
-        NMS_RememberInclude(seenIncludes, Buffer);
+        NMS_RememberInclude(seenIncludes, inComment, Buffer);
         if (strstr(Buffer, "</Composite>")) {
             DebugSpew("GenerateMQUI::Inserting our xml files");
             PMQXMLFILE      pFile = pXMLFiles;
@@ -428,8 +456,9 @@ bool GenerateMQUI()
                 return false;
             }
             string skinIncludes; // NMS: includes this skin's EQUI.xml already has
+            bool skinInComment = false; // NMS: inside <!-- --> at the end of the previous line
             while (fgets(Buffer, 2048, forg)) {
-                NMS_RememberInclude(skinIncludes, Buffer);
+                NMS_RememberInclude(skinIncludes, skinInComment, Buffer);
                 if (strstr(Buffer, "</Composite>")) {
                     //DebugSpew("GenerateMQUI::Inserting our xml files");
                     PMQXMLFILE      pFile = pXMLFiles;
