@@ -5,7 +5,8 @@ void command_resetaa_timer(Client *c, const Seperator *sep)
 	const auto arguments = sep->argnum;
 	if (!arguments) {
 		c->Message(Chat::White, "Usage: #resetaa_timer all - Reset all Alternate Advancement timers");
-		c->Message(Chat::White, "Usage: #resetaa_timer [Timer ID] - Reset Alternate Advancement timer by ID");
+		// NMS: takes the AA ID that #find aa shows; with dynamic AA timers a timer ID differs per character
+		c->Message(Chat::White, "Usage: #resetaa_timer [AA ID] - Reset one Alternate Advancement timer (AA ID from #find aa)");
 		return;
 	}
 
@@ -29,17 +30,41 @@ void command_resetaa_timer(Client *c, const Seperator *sep)
 
 		return;
 	} else if (sep->IsNumber(1)) {
-		const auto timer_id = Strings::ToInt(sep->arg[1]);
+		// NMS: the argument is an AA (rank) ID, and the reply says whether there was a timer to reset
+		const auto rank_id = Strings::ToInt(sep->arg[1]);
+		const auto rank    = zone->GetAlternateAdvancementRank(rank_id);
+		if (!rank || !rank->base_ability) {
+			c->Message(
+				Chat::White,
+				fmt::format(
+					"AA {} does not exist. Use #find aa [name] to get its ID.",
+					rank_id
+				).c_str()
+			);
+			return;
+		}
+
+		if (!t->ResetAlternateAdvancementTimer(rank_id)) {
+			c->Message(
+				Chat::White,
+				fmt::format(
+					"No timer to reset for AA {} ({}) on {}.",
+					rank_id,
+					rank->base_ability->name,
+					c->GetTargetDescription(t)
+				).c_str()
+			);
+			return;
+		}
 
 		c->Message(
 			Chat::White,
 			fmt::format(
-				"Reset Alternate Advancement timer {} for {}.",
-				timer_id,
+				"Reset the timer of AA {} ({}) for {}.",
+				rank_id,
+				rank->base_ability->name,
 				c->GetTargetDescription(t)
 			).c_str()
 		);
-
-		t->ResetAlternateAdvancementTimer(timer_id);
 	}
 }

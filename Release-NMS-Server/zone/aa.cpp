@@ -1347,12 +1347,41 @@ void Client::ClearDynamicAATimers() {
 }
 
 
-void Client::ResetAlternateAdvancementTimer(int ability) {
-	AA::Rank *rank = zone->GetAlternateAdvancementRank(casting_spell_aa_id);
-	if(rank) {
-		SendAlternateAdvancementTimer(rank->spell_type, 0, time(0));
-		p_timers.Clear(&database, rank->spell_type + pTimerAAStart);
+// NMS: the timer an AA's cooldown runs on; unlike GetDynamicAATimer it never assigns a new one
+std::optional<int> Client::FindAlternateAdvancementTimer(const AA::Rank *rank)
+{
+	if (!rank || !rank->base_ability) {
+		return std::nullopt;
 	}
+
+	if (!RuleB(Custom, UseDynamicAATimers)) {
+		return rank->spell_type;
+	}
+
+	if (m_aa_timers_cache.empty()) {
+		GetDynamicAATimers();
+	}
+
+	const auto e = m_aa_timers_cache.find(rank->base_ability->id);
+	if (e == m_aa_timers_cache.end()) {
+		return std::nullopt;
+	}
+
+	return e->second;
+}
+
+// NMS: upstream ignored the argument and read casting_spell_aa_id (the interrupt callers pass it anyway),
+// so #resetaa_timer <id> did nothing; it also cleared the DB spell_type instead of the dynamic timer
+bool Client::ResetAlternateAdvancementTimer(int rank_id)
+{
+	const auto timer_id = FindAlternateAdvancementTimer(zone->GetAlternateAdvancementRank(rank_id));
+	if (!timer_id) {
+		return false;
+	}
+
+	SendAlternateAdvancementTimer(*timer_id, 0, static_cast<int>(time(nullptr)));
+	p_timers.Clear(&database, *timer_id + pTimerAAStart);
+	return true;
 }
 
 void Client::ResetAlternateAdvancementTimers() {
@@ -1395,8 +1424,12 @@ void Client::ResetOnDeathAlternateAdvancement() {
 			continue;
 
 		// since they're dying, we just need to clear the DB
-		if (ability->reset_on_death)
-			p_timers.Clear(&database, rank->spell_type + pTimerAAStart);
+		if (ability->reset_on_death) {
+			// NMS: with dynamic AA timers the cooldown runs on the per-character id; the DB spell_type belongs to another AA
+			if (const auto timer_id = FindAlternateAdvancementTimer(rank)) {
+				p_timers.Clear(&database, *timer_id + pTimerAAStart);
+			}
+		}
 	}
 }
 

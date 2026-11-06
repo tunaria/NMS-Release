@@ -1140,6 +1140,7 @@ public:
 	int GetDynamicAATimer(int aa_id);
 	int SetDynamicAATimer(int aa_id);
 	void ClearDynamicAATimers();
+	std::optional<int> FindAlternateAdvancementTimer(const AA::Rank *rank);
 
 	void GetAllToggleAAStatus();
 	void SetToggleAAStatus(int ability_id, bool status);
@@ -1159,7 +1160,7 @@ public:
 	void SendAlternateAdvancementPoints();
 	void SendAlternateAdvancementTimer(int ability, int begin, int end);
 	void SendAlternateAdvancementTimers();
-	void ResetAlternateAdvancementTimer(int ability);
+	bool ResetAlternateAdvancementTimer(int rank_id); // NMS: returns whether a timer was found
 	void ResetAlternateAdvancementTimers();
 	void ResetOnDeathAlternateAdvancement();
 
