@@ -5580,6 +5580,10 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 		SendColoredText(color, std::string("This creature would take an army to defeat!"));
 	}
 
+	if (t->IsRareSpawn()) {
+		SendColoredText(color, std::string("This is a Rare Creature"));
+	}
+
 	if (t->GetSpecialAbility(SpecialAbility::CharmImmunity)) {
 		SendColoredText(color, std::string("Something about this creature's gaze tells you it cannot be swayed by enchantments!"));
 	}
