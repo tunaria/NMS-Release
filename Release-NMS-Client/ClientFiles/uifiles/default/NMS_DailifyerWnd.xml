@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<XML ID="EQInterfaceDefinitionLanguage">
+	<Schema xmlns="EverQuestData" xmlns:dt="EverQuestDataTypes" />
+	<!-- NMS: Dailifyer challenge window (eqgame_dll/dailifyer_window.cpp). Frame and large buttons
+	     as in NMS_WaypointsWnd.xml, NPC name and text box as in the LDoN AdventureRequestWnd.
+	     EQLS_window_pieces_01.tga is declared by NMS_WaypointsWnd.xml, which always loads first
+	     (WaypointsWnd::Initialize runs before DailifyerWnd::Initialize): declaring it again here is
+	     a "Duplicate item" schema error that stops the game at startup. -->
+
+	<!-- Large button (own names, so this file does not depend on the waypoint window's) -->
+	<Ui2DAnimation item="A_DLF_LargeBtnNormal">
+		<Cycle>true</Cycle>
+		<Frames>
+			<Texture>EQLS_window_pieces_01.tga</Texture>
+			<Location>
+				<X>0</X>
+				<Y>34</Y>
+			</Location>
+			<Size>
+				<CX>244</CX>
+				<CY>32</CY>
+			</Size>
+			<Hotspot>
+				<X>0</X>
+				<Y>0</Y>
+			</Hotspot>
+			<Duration>1000</Duration>
+		</Frames>
+	</Ui2DAnimation>
+	<Ui2DAnimation item="A_DLF_LargeBtnHover">
+		<Cycle>true</Cycle>
+		<Frames>
+			<Texture>EQLS_window_pieces_01.tga</Texture>
+			<Location>
+				<X>0</X>
+				<Y>65</Y>
+			</Location>
+			<Size>
+				<CX>244</CX>
+				<CY>32</CY>
+			</Size>
+			<Hotspot>
+				<X>0</X>
+				<Y>0</Y>
+			</Hotspot>
+			<Duration>1000</Duration>
+		</Frames>
+	</Ui2DAnimation>
+	<Ui2DAnimation item="A_DLF_LargeBtnPressed">
+		<Cycle>true</Cycle>
+		<Frames>
+			<Texture>EQLS_window_pieces_01.tga</Texture>
+			<Location>
+				<X>0</X>
+				<Y>96</Y>
+			</Location>
+			<Size>
+				<CX>244</CX>
+				<CY>32</CY>
+			</Size>
+			<Hotspot>
+				<X>0</X>
+				<Y>0</Y>
+			</Hotspot>
+			<Duration>1000</Duration>
+		</Frames>
+	</Ui2DAnimation>
+	<Ui2DAnimation item="A_DLF_LargeBtnPressedHover">
+		<Cycle>true</Cycle>
+		<Frames>
+			<Texture>EQLS_window_pieces_01.tga</Texture>
+			<Location>
+				<X>0</X>
+				<Y>158</Y>
+			</Location>
+			<Size>
+				<CX>244</CX>
+				<CY>32</CY>
+			</Size>
+			<Hotspot>
+				<X>0</X>
+				<Y>0</Y>
+			</Hotspot>
+			<Duration>1000</Duration>
+		</Frames>
+	</Ui2DAnimation>
+	<Ui2DAnimation item="A_DLF_LargeBtnDisabled">
+		<Cycle>true</Cycle>
+		<Frames>
+			<Texture>EQLS_window_pieces_01.tga</Texture>
+			<Location>
+				<X>0</X>
+				<Y>158</Y>
+			</Location>
+			<Size>
+				<CX>244</CX>
+				<CY>32</CY>
+			</Size>
+			<Hotspot>
+				<X>0</X>
+				<Y>0</Y>
+			</Hotspot>
+			<Duration>1000</Duration>
+		</Frames>
+	</Ui2DAnimation>
+
+	<!-- NPC name -->
+	<Label item="DLF_NPCLabel">
+		<ScreenID>DLF_NPCLabel</ScreenID>
+		<Font>3</Font>
+		<RelativePosition>true</RelativePosition>
+		<Location>
+			<X>8</X>
+			<Y>6</Y>
+		</Location>
+		<Size>
+			<CX>494</CX>
+			<CY>16</CY>
+		</Size>
+		<Text>The Dailifyer</Text>
+		<TextColor>
+			<R>255</R>
+			<G>255</G>
+			<B>255</B>
+		</TextColor>
+		<NoWrap>true</NoWrap>
+		<AlignCenter>true</AlignCenter>
+		<AlignRight>false</AlignRight>
+	</Label>
+
+	<!-- Challenges: column 0 is hidden and only carries the row data -->
+	<Listbox item="DLF_ChallengeList">
+		<ScreenID>DLF_ChallengeList</ScreenID>
+		<DrawTemplate>WDT_Inner</DrawTemplate>
+		<RelativePosition>true</RelativePosition>
+		<AutoStretch>false</AutoStretch>
+		<Location>
+			<X>8</X>
+			<Y>26</Y>
+		</Location>
+		<Size>
+			<CX>494</CX>
+			<CY>104</CY>
+		</Size>
+		<Style_Border>true</Style_Border>
+		<Style_VScroll>true</Style_VScroll>
+		<Style_AutoVScroll>true</Style_AutoVScroll>
+		<Columns>
+			<Width>0</Width>
+			<Heading></Heading>
+		</Columns>
+		<Columns>
+			<Width>180</Width>
+			<Heading>Challenge</Heading>
+		</Columns>
+		<Columns>
+			<Width>80</Width>
+			<Heading>Completed</Heading>
+		</Columns>
+		<Columns>
+			<Width>214</Width>
+			<Heading>Status</Heading>
+		</Columns>
+	</Listbox>
+
+	<!-- Objective of the selected challenge: an empty framed box with a wrapping label on top -->
+	<STMLbox item="DLF_ObjectiveFrame">
+		<ScreenID>DLF_ObjectiveFrame</ScreenID>
+		<DrawTemplate>WDT_Inner</DrawTemplate>
+		<RelativePosition>true</RelativePosition>
+		<AutoStretch>false</AutoStretch>
+		<Location>
+			<X>8</X>
+			<Y>138</Y>
+		</Location>
+		<Size>
+			<CX>494</CX>
+			<CY>72</CY>
+		</Size>
+		<Style_Border>true</Style_Border>
+		<Style_VScroll>false</Style_VScroll>
+	</STMLbox>
+	<Label item="DLF_ObjectiveLabel">
+		<ScreenID>DLF_ObjectiveLabel</ScreenID>
+		<Font>3</Font>
+		<RelativePosition>true</RelativePosition>
+		<Location>
+			<X>14</X>
+			<Y>142</Y>
+		</Location>
+		<Size>
+			<CX>482</CX>
+			<CY>64</CY>
+		</Size>
+		<Text>Select a challenge.</Text>
+		<TextColor>
+			<R>255</R>
+			<G>255</G>
+			<B>255</B>
+		</TextColor>
+		<NoWrap>false</NoWrap>
+		<AlignCenter>false</AlignCenter>
+		<AlignRight>false</AlignRight>
+	</Label>
+
+	<Button item="DLF_ChallengeButton">
+		<ScreenID>DLF_ChallengeButton</ScreenID>
+		<Font>4</Font>
+		<RelativePosition>true</RelativePosition>
+		<Location>
+			<X>8</X>
+			<Y>218</Y>
+		</Location>
+		<Size>
+			<CX>246</CX>
+			<CY>32</CY>
+		</Size>
+		<Style_Checkbox>false</Style_Checkbox>
+		<Text>Accept Challenge</Text>
+		<TextColor>
+			<R>255</R>
+			<G>255</G>
+			<B>255</B>
+		</TextColor>
+		<ButtonDrawTemplate>
+			<Normal>A_DLF_LargeBtnNormal</Normal>
+			<Pressed>A_DLF_LargeBtnPressed</Pressed>
+			<Flyby>A_DLF_LargeBtnHover</Flyby>
+			<Disabled>A_DLF_LargeBtnDisabled</Disabled>
+			<PressedFlyby>A_DLF_LargeBtnPressedHover</PressedFlyby>
+		</ButtonDrawTemplate>
+	</Button>
+	<Button item="DLF_PlunderButton">
+		<ScreenID>DLF_PlunderButton</ScreenID>
+		<Font>4</Font>
+		<RelativePosition>true</RelativePosition>
+		<Location>
+			<X>256</X>
+			<Y>218</Y>
+		</Location>
+		<Size>
+			<CX>246</CX>
+			<CY>32</CY>
+		</Size>
+		<Style_Checkbox>false</Style_Checkbox>
+		<Text>Plunder</Text>
+		<TextColor>
+			<R>255</R>
+			<G>255</G>
+			<B>255</B>
+		</TextColor>
+		<ButtonDrawTemplate>
+			<Normal>A_DLF_LargeBtnNormal</Normal>
+			<Pressed>A_DLF_LargeBtnPressed</Pressed>
+			<Flyby>A_DLF_LargeBtnHover</Flyby>
+			<Disabled>A_DLF_LargeBtnDisabled</Disabled>
+			<PressedFlyby>A_DLF_LargeBtnPressedHover</PressedFlyby>
+		</ButtonDrawTemplate>
+	</Button>
+
+	<!-- Main window -->
+	<Screen item="DailifyerWnd">
+		<RelativePosition>false</RelativePosition>
+		<Location>
+			<X>16</X>
+			<Y>16</Y>
+		</Location>
+		<Size>
+			<CX>534</CX>
+			<CY>288</CY>
+		</Size>
+		<Text>Dailifyer Challenges</Text>
+		<Style_VScroll>false</Style_VScroll>
+		<Style_Border>true</Style_Border>
+		<Style_Transparent>false</Style_Transparent>
+		<DrawTemplate>WDT_Filigree</DrawTemplate>
+		<Style_Titlebar>true</Style_Titlebar>
+		<Style_Closebox>true</Style_Closebox>
+		<Escapable>true</Escapable>
+		<Style_Minimizebox>true</Style_Minimizebox>
+		<Pieces>DLF_NPCLabel</Pieces>
+		<Pieces>DLF_ChallengeList</Pieces>
+		<Pieces>DLF_ObjectiveFrame</Pieces>
+		<Pieces>DLF_ObjectiveLabel</Pieces>
+		<Pieces>DLF_ChallengeButton</Pieces>
+		<Pieces>DLF_PlunderButton</Pieces>
+	</Screen>
+</XML>

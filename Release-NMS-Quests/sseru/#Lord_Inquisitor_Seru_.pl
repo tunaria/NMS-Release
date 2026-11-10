@@ -11,6 +11,13 @@ sub EVENT_TIMER {
  }
 }
 
+# NMS: the Fragments of Truth drop only while the four Praesertums live (NMS_dailifyer_utils.pl).
+# Must return 0: any other value cancels the death.
+sub EVENT_DEATH {
+  plugin::AddSeruPraesertumReward($npc);
+  return 0;
+}
+
 sub EVENT_DEATH_COMPLETE {
   quest::stoptimer(1);
 }

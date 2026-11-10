@@ -54,6 +54,19 @@ sub EVENT_ENTERZONE {
         UpdateDayNightCycle($zonesn, $instanceid, $zonetime);
         quest::settimer("DayNightTimer", 30);
     }
+
+    # NMS: start or void a Dailifyer challenge run (NMS_dailifyer_utils.pl)
+    plugin::DailifyerOnEnterZone();
+}
+
+# NMS: the Dailifyer challenger leaving the instance voids the run. Moves inside the same instance never
+# reach EVENT_ZONE. Must return 0: any other value redirects or cancels the zoning.
+sub EVENT_ZONE {
+    if ($target_zone_id != $from_zone_id || $target_instance_id != $from_instance_id) {
+        plugin::DailifyerOnLeaveZone();
+    }
+
+    return 0;
 }
 
 sub EVENT_EXP_GAIN {
@@ -145,6 +158,9 @@ sub EVENT_CONNECT {
 sub EVENT_DISCONNECT {
     # Removes invulnerability effects when disconnecting from the server.
     $client->BuffFadeByEffect(40);
+
+    # NMS: camping or going link dead voids a Dailifyer challenge run
+    plugin::DailifyerOnLeaveZone();
 }
 
 sub EVENT_POPUPRESPONSE {

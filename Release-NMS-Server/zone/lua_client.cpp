@@ -65,6 +65,36 @@ void Lua_Client::SendWaypointList() {
 	self->SendWaypointList();
 }
 
+// NMS: client:SendDailifyerWindow(npc_id, { { id = 1, name = "...", objective = "...", status = 0, completed = false, lockout = 0 }, ... })
+void Lua_Client::SendDailifyerWindow(uint32 npc_id, luabind::adl::object challenges_table) {
+	Lua_Safe_Call_Void();
+	if (luabind::type(challenges_table) != LUA_TTABLE) {
+		return;
+	}
+
+	std::vector<DailifyerChallenge> challenges;
+
+	luabind::raw_iterator end; // raw_iterator uses lua_rawget
+	for (luabind::raw_iterator it(challenges_table); it != end; ++it)
+	{
+		if (luabind::type(*it) != LUA_TTABLE) {
+			continue;
+		}
+
+		// no need to try/catch, quest lua parser already catches exceptions
+		DailifyerChallenge e;
+		e.id              = luabind::object_cast<uint32>((*it)["id"]);
+		e.status          = luabind::type((*it)["status"]) != LUA_TNIL ? luabind::object_cast<uint8>((*it)["status"]) : 0;
+		e.completed       = luabind::type((*it)["completed"]) != LUA_TNIL && luabind::object_cast<bool>((*it)["completed"]);
+		e.lockout_seconds = luabind::type((*it)["lockout"]) != LUA_TNIL ? luabind::object_cast<uint32>((*it)["lockout"]) : 0;
+		e.name            = luabind::type((*it)["name"]) != LUA_TNIL ? luabind::object_cast<std::string>((*it)["name"]) : "";
+		e.objective       = luabind::type((*it)["objective"]) != LUA_TNIL ? luabind::object_cast<std::string>((*it)["objective"]) : "";
+		challenges.emplace_back(e);
+	}
+
+	self->SendDailifyerWindow(npc_id, challenges);
+}
+
 bool Lua_Client::UnlockWaypoint(std::string waypoint_shortname) {
 	Lua_Safe_Call_Bool();
 	return self->UnlockWaypoint(waypoint_shortname);
@@ -4205,6 +4235,7 @@ luabind::scope lua_register_client() {
 	.def("SendOPTranslocateConfirm", (void(Lua_Client::*)(Lua_Mob,int))&Lua_Client::SendOPTranslocateConfirm)
 	.def("SendPath", (void(Lua_Client::*)(Lua_Mob))&Lua_Client::SendPath)
 	.def("SendPEQZoneFlagInfo", (void(Lua_Client::*)(Lua_Client))&Lua_Client::SendPEQZoneFlagInfo)
+	.def("SendDailifyerWindow", (void(Lua_Client::*)(uint32,luabind::adl::object))&Lua_Client::SendDailifyerWindow)
 	.def("SendSound", (void(Lua_Client::*)(void))&Lua_Client::SendSound)
 	.def("SendToGuildHall", (void(Lua_Client::*)(void))&Lua_Client::SendToGuildHall)
 	.def("SendToInstance", (void(Lua_Client::*)(std::string,std::string,uint32,float,float,float,float,std::string,uint32))&Lua_Client::SendToInstance)

@@ -92,6 +92,8 @@ sub EVENT_SAY {
 
 sub EVENT_DEATH_COMPLETE {
     plugin::CustomEventNPCDeathEntry($killer_id);
+    # NMS: Dailifyer challenge goals (NMS_dailifyer_utils.pl)
+    plugin::DailifyerOnNPCDeath($npc);
 
     if (defined($killed_corpse_id)) {
         my $corpse = $entity_list->GetCorpseByID($killed_corpse_id);

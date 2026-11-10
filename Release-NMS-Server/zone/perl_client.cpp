@@ -56,6 +56,27 @@ void Perl_Client_SendWaypointList(Client* self)
 	}
 }
 
+// NMS: $client->SendDailifyerWindow($npc_id, [ { id, name, objective, status, completed, lockout }, ... ])
+void Perl_Client_SendDailifyerWindow(Client* self, uint32 npc_id, perl::reference challenges_ref)
+{
+	std::vector<DailifyerChallenge> challenges;
+
+	perl::array list = challenges_ref;
+	for (perl::hash c : list) // only works if all elements are hashrefs
+	{
+		DailifyerChallenge e;
+		e.id              = c["id"].as<uint32>();
+		e.status          = c.exists("status") ? c["status"].as<uint8>() : 0;
+		e.completed       = c.exists("completed") && c["completed"].as<int>() != 0;
+		e.lockout_seconds = c.exists("lockout") ? c["lockout"].as<uint32>() : 0;
+		e.name            = c.exists("name") ? c["name"].c_str() : "";
+		e.objective       = c.exists("objective") ? c["objective"].c_str() : "";
+		challenges.emplace_back(e);
+	}
+
+	self->SendDailifyerWindow(npc_id, challenges);
+}
+
 bool Perl_Client_UnlockWaypoint(Client* self, std::string waypoint_shortname)
 {
 	if (self) {
@@ -4219,6 +4240,7 @@ void perl_register_client()
 	package.add("UseDiscipline", &Perl_Client_UseDiscipline);
 	package.add("UseAugmentContainer", &Perl_Client_UseAugmentContainer);
 	package.add("SendWaypointList", (void(*)(Client*))&Perl_Client_SendWaypointList);
+	package.add("SendDailifyerWindow", &Perl_Client_SendDailifyerWindow);
 	package.add("UnlockWaypoint", (bool(*)(Client*, std::string))&Perl_Client_UnlockWaypoint);
 	package.add("IsWaypointUnlocked", (bool(*)(Client*, std::string))&Perl_Client_IsWaypointUnlocked);
 	package.add("CheckWaypointGroupFeature", (bool(*)(Client*))&Perl_Client_CheckWaypointGroupFeature);

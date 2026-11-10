@@ -643,6 +643,7 @@ public:
 	void ClearPetNameChange();
 
 	void SendWaypointList();
+	void SendDailifyerWindow(uint32 npc_id, luabind::adl::object challenges_table); // NMS: Dailifyer window
 	bool UnlockWaypoint(std::string waypoint_shortname);
 	bool IsWaypointUnlocked(std::string waypoint_shortname);
 	bool CheckWaypointGroupFeature();

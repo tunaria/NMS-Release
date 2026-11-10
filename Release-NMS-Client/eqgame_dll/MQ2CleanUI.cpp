@@ -21,6 +21,7 @@ GNU General Public License for more details.
 //#define DEBUG_TRY 1
 #include "MQ2Main.h"
 #include "waypoint_window.h"
+#include "dailifyer_window.h"
 #include "pet_window.h"
 
 char *OurCaption = "Edge is loading...";
@@ -39,7 +40,7 @@ char *OurCaption = "Edge is loading...";
 // Destroying them HERE, before the trampoline, is the fix: the windows are still valid,
 // and ~CCustomWnd -> ~CSidlScreenWnd deregisters from EQ's manager, so EQ never sees
 // them and cannot double-free. Each window re-creates itself on demand afterwards.
-// WaypointsWnd is currently the only SIDL-template window in the build -- any new one
+// WaypointsWnd and DailifyerWnd are the SIDL-template windows in the build -- any new one
 // must be added here.
 //
 // PetWindow is a second, subtler case: it does not own a window, but it caches pointers
@@ -51,6 +52,7 @@ char *OurCaption = "Edge is loading...";
 static void NMS_DestroyCustomWindows()
 {
     WaypointsWnd::Shutdown();
+    DailifyerWnd::Shutdown();
 
     if (PetWindow* pw = PetWindow::GetInstance()) {
         pw->ResetUI();

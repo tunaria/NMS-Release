@@ -1317,6 +1317,7 @@ RULE_BOOL(Custom,   EnableGlobalLoot,                       true,    "Enable or 
 RULE_BOOL(Custom,   PermanentServerBuffsEnabled,            false,   "Enable or disable permanent server buffs (spells 43002, 43005, 36856, 17779)")
 RULE_BOOL(Custom,   GuideAudit,                             true,    "Enable command auditing for guides/GMs of status 80 or higher.")
 RULE_BOOL(Custom,   EnableFabledMobs,                       false,   "Enable Fabled Season globally (true to enable 100% Fabled spawns, false to disable).")
+RULE_BOOL(Custom,   DailifyerEnabled,                       true,    "Enable the Dailifyer challenges (Carles Seregwyn in the Bazaar, NMS_dailifyer_utils.pl). The window requires the client dll.")
 
 RULE_CATEGORY_END()
 
