@@ -21,6 +21,7 @@ GNU General Public License for more details.
 
 #include "MQ2Main.h"
 #include "waypoint_window.h"
+#include "dailifyer_window.h"
 #include <map>
 #include <string>
 #include <algorithm>
@@ -208,6 +209,7 @@ void InitializeMQ2Windows()
     int i;
     DebugSpew("Initializing MQ2 Windows");
     WaypointsWnd::Initialize();
+    DailifyerWnd::Initialize();
 
     //extern PCHAR szItemSlot[];
 
@@ -303,6 +305,7 @@ void ShutdownMQ2Windows()
 {
     DebugSpew("Shutting down MQ2 Windows");
     WaypointsWnd::Shutdown();
+    DailifyerWnd::Shutdown();
 #ifndef ISXEQ
     RemoveCommand("/windows");
     RemoveCommand("/notify");

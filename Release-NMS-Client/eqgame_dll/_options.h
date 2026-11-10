@@ -76,6 +76,10 @@ bool isAAEnabledAtLvl1 = true;
 // Change the value in Hooks.cpp - Search for SCRIBE_DURATION_MS
 bool isToggleSpellBookOnScribeEnabled = true;
 
+// isDailifyerWindowEnabled if set to true shows the Dailifyer challenge window (NMS_DailifyerWnd.xml) when the
+// server sends it (OP_DailifyerWindow 0x140A, Carles Seregwyn in the Bazaar). Requires Custom:DailifyerEnabled on the server.
+bool isDailifyerWindowEnabled = true;
+
 
 // **** ITEM *******
 

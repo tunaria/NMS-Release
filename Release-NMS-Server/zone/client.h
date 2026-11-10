@@ -77,6 +77,7 @@ namespace EQ
 #include "../common/repositories/character_evolving_items_repository.h"
 #include "../common/repositories/player_titlesets_repository.h"
 #include "../common/repositories/nms_waypoints_repository.h"
+#include "nms_dailifyer.h"
 #include "../common/repositories/character_pet_command_states_repository.h"
 
 #include "bot_structs.h"
@@ -977,6 +978,7 @@ public:
 	bool UnlockWaypoint(std::string waypoint_shortname);
 	bool ForgetWaypoint(int32 waypoint_id); // NMS: undo UnlockWaypoint for #map remove
 	void SendWaypointList(bool force = true);
+	void SendDailifyerWindow(uint32 npc_id, const std::vector<DailifyerChallenge>& challenges); // NMS: nms_dailifyer.cpp
 	bool AllowAccountWaypoints();
 	bool CheckWaypointGroupFeature();
 	void EnableWaypointGroupFeature();

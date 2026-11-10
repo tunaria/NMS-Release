@@ -640,4 +640,6 @@ N(OP_CharacterSetCreateRequest),
 N(OP_CharacterSetMoveRequest),
 N(OP_CharacterSetUnlockRequest),
 N(OP_SuppressBuffNameInfo),
+N(OP_DailifyerWindow),
+N(OP_DailifyerRequest),
 // mail and chat opcodes located in ../mail_oplist.h

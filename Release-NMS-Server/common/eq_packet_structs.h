@@ -1602,6 +1602,44 @@ struct WaypointRequest_Struct
     bool    autoconfirm_selected;
 };
 
+// NMS: Dailifyer challenge window. Mirrored by hand in
+// Release-NMS-Client/eqgame_dll/dailifyer_window.cpp: change both sides together.
+enum class DailifyerStatus : uint8 {
+	Available  = 0,
+	Completed  = 1,
+	LockedOut  = 2,
+	InProgress = 3
+};
+
+enum class DailifyerAction : uint8 {
+	Challenge = 1,
+	Plunder   = 2
+};
+
+struct DailifyerChallenge_Struct {
+	uint32 challenge_id;
+	uint8  status;          // DailifyerStatus
+	uint8  completed;
+	uint32 lockout_seconds; // remaining shared lockout, 0 = none
+	char   name[64];
+	char   objective[256];
+};
+
+// OP_DailifyerWindow, server -> client
+struct DailifyerWindow_Struct {
+	uint32 npc_id;          // entity id of the NPC that opened the window
+	char   npc_name[64];
+	uint32 challenge_count;
+	DailifyerChallenge_Struct challenges[];
+};
+
+// OP_DailifyerRequest, client -> server
+struct DailifyerRequest_Struct {
+	uint32 npc_id;
+	uint32 challenge_id;
+	uint8  action;          // DailifyerAction
+};
+
 /*
 ** Consider Struct
 */

@@ -435,6 +435,7 @@ void MapOpcodes()
 	ConnectedOpcodes[OP_ResetAA] = &Client::Handle_OP_ResetAA;
 	ConnectedOpcodes[OP_UnderWorld] = &Client::Handle_OP_UnderWorld;
 	ConnectedOpcodes[OP_WaypointRequest] = &Client::Handle_OP_WaypointRequest;
+	ConnectedOpcodes[OP_DailifyerRequest] = &Client::Handle_OP_DailifyerRequest;
 
 	// shared tasks
 	ConnectedOpcodes[OP_SharedTaskRemovePlayer]   = &Client::Handle_OP_SharedTaskRemovePlayer;

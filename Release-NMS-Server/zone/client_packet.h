@@ -332,6 +332,7 @@
 	void Handle_OP_MovementHistoryList(const EQApplicationPacket* app);
 	void Handle_OP_UnderWorld(const EQApplicationPacket* app);
 	void Handle_OP_WaypointRequest(const EQApplicationPacket *app);
+	void Handle_OP_DailifyerRequest(const EQApplicationPacket *app); // NMS: nms_dailifyer.cpp
 
 	// shared tasks
 	void Handle_OP_SharedTaskRemovePlayer(const EQApplicationPacket *app);

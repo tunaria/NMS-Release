@@ -774,6 +774,81 @@ WHERE log_category_description NOT IN ('Error', 'Warning', 'Crash', 'MySQL Error
 		.content_schema_update = false,
 	},
 
+	// NMS: Dailifyer challenges (Release-NMS-Plugins/NMS_dailifyer_utils.pl). Carles Seregwyn in the
+	// Bazaar, the Fragments of Truth that Lord Inquisitor Seru drops when the four Praesertums are
+	// alive, and one plunder loot table per challenge. The plunder tables point at the bosses' own
+	// lootdrops with the bosses' droplimit/mindrop, so a plunder rolls the same loot as a kill. Every
+	// statement is idempotent; the check is the last row created (Carles' spawn2).
+	// Tested only with the NMS version of Lord Inquisitor Seru's loot (loot table 13516, lootdrop 23223:
+	// Black Ornate Chain Bridle / Glamour - 'Sword of Truth'). On another database, check those ids
+	// before applying it.
+	ManifestEntry{
+		.version = 26,
+		.description = "2026_11_10_dailifyer_challenges",
+		.check = "SELECT s.id FROM spawn2 s WHERE s.spawngroupID IN (SELECT id FROM spawngroup WHERE name = 'bazaar_Carles_Seregwyn')",
+		.condition = "empty",
+		.match = "",
+		.sql = R"(
+-- Dark Elf Shadowknight in full plate (texture/helmtexture 3) holding a Blade of Abrogation (item 5430,
+-- model IT53) and a Sarnak Battle Shield (item 9205, model IT221). Unattackable, like the soulbinders.
+INSERT INTO npc_types (id, name, lastname, level, race, class, bodytype, hp, mana, gender, texture, helmtexture, size, hp_regen_rate, hp_regen_per_second, mana_regen_rate, loottable_id, merchant_id, STR, STA, DEX, AGI, _INT, WIS, CHA, npc_faction_id, face, special_abilities, trackable, show_name, d_melee_texture1, d_melee_texture2, prim_melee_type)
+VALUES (1120001301, 'Carles_Seregwyn', 'The Dailifyer', 70, 6, 5, 1, 34500, 0, 0, 3, 3, 6, 0, 0, 0, 0, 0, 75, 75, 75, 75, 80, 75, 75, 0, 1, '12,1^13,1^14,1^15,1^16,1^17,1^18,1^19,1^20,1^21,1^22,1^23,1^24,1^25,1^28,1^31,1^35,1^39,1^46,1', 1, 1, 53, 221, 1)
+ON DUPLICATE KEY UPDATE name = VALUES(name), lastname = VALUES(lastname);
+
+-- Fragments of Truth (augments for the Reforged Sword of Truth, recipe 927864): 1 or 2 per kill at
+-- equal weight, the same shape as Kerafyrm's Prismatic Scales (lootdrop 807163).
+INSERT INTO lootdrop (id, name) VALUES (807181, 'Lord_Inquisitor_Seru_Fragments_of_Truth')
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+INSERT INTO lootdrop_entries (lootdrop_id, item_id, item_charges, equip_item, chance, multiplier) VALUES
+(807181, 9536, 1, 0, 5, 1), -- Runic Fragment of Truth
+(807181, 9537, 1, 0, 5, 1), -- Akhevan Fragment of Truth
+(807181, 9538, 1, 0, 5, 1), -- Ssraeshzian Fragment of Truth
+(807181, 9539, 1, 0, 5, 1), -- Yttrium Fragment of Truth
+(807181, 9540, 1, 0, 5, 1), -- Lethal Fragment of Truth
+(807181, 9541, 1, 0, 5, 1), -- Magical Fragment of Truth
+(807181, 9542, 1, 0, 5, 1), -- Fiery Fragment of Truth
+(807181, 9543, 1, 0, 5, 1), -- Icy Fragment of Truth
+(807181, 9544, 1, 0, 5, 1), -- Healing Fragment of Truth
+(807181, 9545, 1, 0, 5, 1), -- Hastened Fragment of Truth
+(807181, 9547, 1, 0, 5, 1), -- Gelid Fragment of Truth
+(807181, 9548, 1, 0, 5, 1)  -- Replenishing Fragment of Truth
+ON DUPLICATE KEY UPDATE chance = VALUES(chance);
+
+INSERT INTO loottable (id, name) VALUES
+(794331, 'Lord_Inquisitor_Seru_Praesertum_Reward'),
+(794332, 'Dailifyer_Plunder_Kerafyrm'),
+(794333, 'Dailifyer_Plunder_Lord_Inquisitor_Seru'),
+(794334, 'Dailifyer_Plunder_Zebuxoruk')
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+INSERT INTO loottable_entries (loottable_id, lootdrop_id, multiplier, droplimit, mindrop, probability) VALUES
+(794331, 807181, 1, 2, 1, 100), -- Seru with the four Praesertums alive: Fragments of Truth
+(794332, 807163, 1, 2, 1, 100), -- Kerafyrm: Prismatic Scales (as in loottable 794316)
+(794333, 23223,  1, 1, 0, 100), -- Seru: Glamour - 'Sword of Truth' / Black Ornate Chain Bridle (as in loottable 13516)
+(794333, 807181, 1, 2, 1, 100), -- Seru: Fragments of Truth (as in loottable 794331)
+(794334, 807178, 1, 3, 1, 100), -- Zebuxoruk: Splinters of Time (as in loottable 794330)
+(794334, 807179, 1, 0, 0, 100)  -- Zebuxoruk: Glamour - 'Whip of the Forsaken One', Vortex of the Past (as in loottable 794330)
+ON DUPLICATE KEY UPDATE multiplier = VALUES(multiplier), droplimit = VALUES(droplimit), mindrop = VALUES(mindrop), probability = VALUES(probability);
+
+INSERT INTO spawngroup (name, spawn_limit, dist, max_x, min_x, max_y, min_y, delay, mindelay, despawn, despawn_timer, wp_spawns)
+SELECT 'bazaar_Carles_Seregwyn', 1, 0, 0, 0, 0, 0, 45000, 15000, 0, 100, 0 FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM spawngroup WHERE name = 'bazaar_Carles_Seregwyn');
+
+INSERT INTO spawnentry (spawngroupID, npcID, chance)
+SELECT sg.id, 1120001301, 100 FROM spawngroup sg
+WHERE sg.name = 'bazaar_Carles_Seregwyn'
+  AND NOT EXISTS (SELECT 1 FROM spawnentry se WHERE se.spawngroupID = sg.id AND se.npcID = 1120001301);
+
+-- Classic Bazaar, placed in game with #spawnfix.
+INSERT INTO spawn2 (spawngroupID, zone, version, x, y, z, heading, respawntime, variance, pathgrid, path_when_zone_idle, _condition, cond_value, animation)
+SELECT sg.id, 'bazaar', 0, 51.30, -755.22, 3.75, 376.50, 640, 0, 0, 0, 0, 1, 0 FROM spawngroup sg
+WHERE sg.name = 'bazaar_Carles_Seregwyn'
+  AND NOT EXISTS (SELECT 1 FROM spawn2 s WHERE s.spawngroupID = sg.id);
+)",
+		.content_schema_update = true,
+	},
+
 	// Used for testing
 	//	ManifestEntry{
 	//		.version = 9229,

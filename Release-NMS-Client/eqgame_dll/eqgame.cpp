@@ -9,6 +9,7 @@
 #include "pet_window.h"
 #include "xorstr.h"
 #include "waypoint_window.h"
+#include "dailifyer_window.h"
 #include "who_multiclass.h"
 #include "core_log.h"
 
@@ -842,6 +843,9 @@ unsigned char __fastcall HandleWorldMessage_Detour(DWORD *con, DWORD edx,
       WaypointsWnd::OnIncomingPacket(opcode, buf, size);
       return 1; // Suppress from native client
       break;
+  case 0x140A: // NMS: OP_DailifyerWindow, unknown to the native client
+      DailifyerWnd::OnIncomingPacket(opcode, buf, size);
+      return 1;
   case 0x1341:
     // OP_PetList is handled by MultiPet above.
     // This case is kept to avoid routing the opcode elsewhere if
