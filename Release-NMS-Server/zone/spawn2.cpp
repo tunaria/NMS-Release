@@ -484,7 +484,11 @@ bool ZoneDatabase::PopulateZoneSpawnList(uint32 zoneid, LinkedList<Spawn2*> &spa
 	gettimeofday(&tv, nullptr);
 
 	auto no_respawn = false;
-	auto suppress_spawn = zone->GetInstanceID() == 0;
+	auto suppress_spawn = false;
+	if (RuleB(Custom, SuppressOpenWorldBossSpawn)) {
+		suppress_spawn = zone->GetInstanceID() == 0;
+	}
+
 	if (RuleI(Custom, StaticInstanceVersion) == version) {
 		version = RuleI(Custom, StaticInstanceTemplateVersion);
 		no_respawn = true;
