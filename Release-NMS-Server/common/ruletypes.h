@@ -1216,7 +1216,7 @@ RULE_INT(Custom,	EoMUnlockCharacterSetCost,				5,		"EoM Cost to unlock a charact
 RULE_INT(Custom,	BaseCharacterSlots,						24,		"Base number of character slots which players have access to.")
 RULE_INT(Custom,	EoMUnlockCharacterSlots,				12,		"Maximum number of character slots which a player can unlock with EoM.")
 RULE_INT(Custom,	EoMUnlockCharacterSlotCost,				5,		"EoM Cost to unlock a character slot")
-RULE_BOOL(Custom,	SuppressOpenWorldBossSpawn				false,	"Enable this rule to prevent NPCs with 7200 second respawn or longer from spawning in open world zones.")
+RULE_BOOL(Custom,	SuppressOpenWorldBossSpawn,				false,	"Enable this rule to prevent NPCs with 7200 second respawn or longer from spawning in open world zones.")
 
 // NMS Launcher Enforcement (Bazaar holding-shard jail for wrong-client / no-4GB / not-launcher)
 
