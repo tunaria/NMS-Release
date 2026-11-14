@@ -590,7 +590,6 @@ bool ZoneDatabase::PopulateZoneSpawnList(uint32 zoneid, LinkedList<Spawn2*> &spa
 				spawn_enabled = false;
 			}
 		}
-
 		auto new_spawn = new Spawn2(
 			s.id,
 			s.spawngroupID,
