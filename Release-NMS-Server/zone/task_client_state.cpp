@@ -500,7 +500,9 @@ bool ClientTaskState::CanUpdate(Client* client, const TaskUpdateFilter& filter, 
 
 	// item is only checked for updates that provide an item to check (unlike npc which may be null for non-npcs)
 	if (!activity.item_id_list.empty() && filter.item_id != 0 &&
-	    !Tasks::IsInMatchList(activity.item_id_list, std::to_string(filter.item_id)))
+	    !Tasks::IsInMatchList(activity.item_id_list, std::to_string(filter.item_id)) &&
+	    (filter.base_item_id == 0 ||
+	     !Tasks::IsInMatchList(activity.item_id_list, std::to_string(filter.base_item_id))))
 	{
 		LogTasks("client [{}] task [{}]-[{}] failed item match filter", client->GetName(), task_id, client_activity.activity_id);
 		return false;
@@ -743,6 +745,9 @@ bool ClientTaskState::UpdateTasksOnDeliver(Client* client, std::vector<EQ::ItemI
 		}
 
 		filter.item_id = item->GetID();
+		filter.base_item_id = (filter.item_id >= 1000000 && filter.item_id < 3000000)
+			? filter.item_id % 1000000
+			: 0;
 
 		int count = item->IsStackable() ? item->GetCharges() : 1;
 		int updated_count = UpdateTasks(client, filter, count);

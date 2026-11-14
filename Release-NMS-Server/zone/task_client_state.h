@@ -21,6 +21,7 @@ struct TaskUpdateFilter
 	int task_id           = 0;
 	int dz_switch_id      = 0;
 	uint32_t item_id      = 0;
+	uint32_t base_item_id = 0;
 	glm::vec4 pos;
 	bool use_pos          = false; // if true uses pos instead of client position for area filters
 	bool ignore_area      = false; // if true, area check is disabled
